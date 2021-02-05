@@ -5,11 +5,10 @@ Implementation of a wall segmentation algorithm in PyTorch. Implementation is ba
 The used database is [MIT ADE20K Scene parsing dataset](http://sceneparsing.csail.mit.edu/), where 150 different categories are labeled.
 An example of an image from the database:<br/> 
 
-<img align="center" src="https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Examples%20from%20database.png"><br/> <br/> 
+<p align="center">
+  <img src="https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Examples%20from%20database.png"><br/> <br/> 
+</p>
 
-
-
- 
 Because for solving the problem of wall segmentation, we do not need all the images inside the ADE20K database (we need only indoor images), a subset of the database is used in
 training the Model.<br/> <br/>
 
