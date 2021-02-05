@@ -43,13 +43,8 @@ There are different models for training the segmentation module, described in de
 
 ## Training of the segmentation module<br/>
 
-<div dir="justify">
-The main contibution of this project is simplifying the project already available at the [link](https://github.com/CSAILVision/semantic-segmentation-pytorch) and training 
-the segmentation module only for wall segmentation. Three different approaches to training the model were considered. In all three approaches, the weights of the encoder are
-initialized using the pretrained model of ResNet50 trained on the ImageNet database. First considered approach was to use transfer learning,
-to train the model on all 150 different categories, and then to change the output layer of the decoder and train only the output layer on images of interest. The second approach
-differs from the first approach only in the last part, where not only the last layer is trained on images of interest, instead, the entire decoder is trained on images of interes. The third approach does not include transfer learning as described in previous two cases. Instead, the segmentation module is trained from the start on the images of interest. 
-</div>
+The main contibution of this project is simplifying the project already available at the [link](https://github.com/CSAILVision/semantic-segmentation-pytorch) and training the segmentation module only for wall segmentation. Three different approaches to training the model were considered. In all three approaches, the weights of the encoder are initialized using the pretrained model of ResNet50 trained on the ImageNet database. First considered approach was to use transfer learning, to train the model on all 150 different categories, and then to change the output layer of the decoder and train only the output layer on images of interest. The second approach differs from the first approach only in the last part, where not only the last layer is trained on images of interest, instead, the entire decoder is trained on images of interes. The third approach does not include transfer learning as described in previous two cases. Instead, the segmentation module is trained from the start on the images of interest. <br/><br/>
+
 ## Results<br/>
 
 Mean values of pixel accuracy and IoU on validation subset are given in the table.
