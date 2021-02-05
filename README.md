@@ -3,7 +3,8 @@
 Implementation of a wall segmentation algorithm in PyTorch. Implementation is based on a [paper](https://arxiv.org/abs/1612.01105).<br/> 
 
 The used database is [MIT ADE20K Scene parsing dataset](http://sceneparsing.csail.mit.edu/), where 150 different categories are labeled.
-An example of an image from the database: ![Example](https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Examples%20from%20database.png)<br/> <br/> 
+An example of an image from the database:<br/> 
+![Example](https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Examples%20from%20database.png)<br/> <br/> 
 
 Because for solving the problem of wall segmentation, we do not need all the images inside the ADE20K database (we need only indoor images), a subset of the database is used in
 training the Model.<br/> <br/>
@@ -55,8 +56,10 @@ Mean values of pixel accuracy and IoU on validation subset are given in the tabl
 |Pixel accuracy [%]|      84.82       |      86.24       |      90.39       |
 |IoU [%]           |      56.87       |      59.08       |      68.79       |
 
-
+First approach: <br/> 
 ![Result obtained using first approach](https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/First%20approach.png)<br/> <br/> 
+Second approach:<br/> 
 ![Result obtained using second approach](https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Second%20approach.png)<br/> <br/>
+Third approach:<br/> 
 ![Result obtained using third approach](https://github.com/bjekic/WallSegmentation/blob/main/readme%20supplementary/Third%20approach.png)<br/> <br/>
 [From left to right: Test image, Segmentation mask, Predicted result]
