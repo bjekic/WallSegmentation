@@ -25,7 +25,7 @@ Two defined derived classes are a class for loading the training data, and a cla
 are taken from [CSAILVision/semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) and small changes were made. The changes made to the 
 original implementations of TrainDataset and ValDataset are for loading only images of interest (images that contain wall segments). Also, inside this folder, 
 an additional function, for differentiating between the images of interest and other images, is implemented. <br/>
- - folder [Model weights]( url ) - where weights of the trained models are held.<br/>
+ - folder [Model weights](https://github.com/bjekic/WallSegmentation/tree/main/Model%20weights) - where weights of the trained models are held.<br/>
  - folder [data](https://github.com/bjekic/WallSegmentation/tree/main/data) - where the database is held, as well as files used for loading the dataset.  (The Database is not present in the directory due to size) <br/>
  - folder [cktp](https://github.com/bjekic/WallSegmentation/blob/main/ckpt/README.md) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
  - [train.py](https://github.com/bjekic/WallSegmentation/blob/main/train.py) - file where helper functions for training the segmentation module are implemented.<br/>
