@@ -8,7 +8,7 @@ An example of an image from the database: ![Example]( url u repository )<br/> <b
 Because for solving the problem of wall segmentation, we do not need all the images inside the ADE20K database (we need only indoor images), a subset of the database is used in
 training the Model.<br/> <br/>
 
-##Segmentation architecture:<br/> 
+## Segmentation architecture:<br/> 
  - Encoder - obtains a feature map of the original image that has smaller height and width anda larger number of channels. The architecture of the encoder, used in this
 project is the Dilated ResNet 50, where the last two blocks of the ResNet50 architecture use dilated convolution with a smaller stride. <br/> 
  - Decoder - Based on the feature map, classifies each pixel of the feature map into one of the classes. The architecture of the decoder, used in this project is the 
@@ -27,7 +27,7 @@ original implementations of TrainDataset and ValDataset are for loading only ima
 an additional function, for differentiating between the images of interest and other images, is implemented. <br/>
  - folder [Model weights]( url ) - where weights of the trained models are held.<br/>
  - folder [data](https://github.com/bjekic/WallSegmentation/tree/main/data) - where the database is held, as well as files used for loading the dataset.  (The Database is not present in the directory due to size) <br/>
- - folder [cktp]( url ) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
+ - folder [cktp](https://github.com/bjekic/WallSegmentation/blob/main/ckpt/README.md) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
  - [train.py](https://github.com/bjekic/WallSegmentation/blob/main/train.py) - file where helper functions for training the segmentation module are implemented.<br/>
  - [eval.py](https://github.com/bjekic/WallSegmentation/blob/main/eval.py) - file where helper functions for evaluating the segmentation module are implemented. <br/>
  - [Model_training.ipynb](https://github.com/bjekic/WallSegmentation/blob/main/Model_training.ipynb) - the code for training the segmentation module on 150 different classes of the ADE20K dataset.<br/>
@@ -37,7 +37,7 @@ There are different models for training the segmentation module, described in de
 
 
 
-##Training of the segmentation module<br/>
+## Training of the segmentation module<br/>
 
 The main contibution of this project is simplifying the project already available at the [link](https://github.com/CSAILVision/semantic-segmentation-pytorch) and training 
 the segmentation module only for wall segmentation. Three different approaches to training the model were considered. In all three approaches, the weights of the encoder are
