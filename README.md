@@ -19,7 +19,7 @@ project is the Dilated ResNet 50, where the last two blocks of the ResNet50 arch
 PPM architecture.<br/> <br/> 
 
 ## Structure of the project:<br/>
- - folder [Models](https://github.com/bjekic/WallSegmentation/tree/main/Models) consists of 3 seperate .py files: <br/> 
+ - Folder [Models](https://github.com/bjekic/WallSegmentation/tree/main/Models) consists of 3 seperate .py files: <br/> 
    - [resnet.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/resnet.py) - where the ResNet architecture is defined. <br/>
    - [models.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/models.py) - where the whole PPM architecture for the decoder is defined, the ResNet dilated architecture for the
 encoder, as well as the class for the Segmentation Module. Beside the classes for the different architectures, there are
@@ -29,9 +29,9 @@ Two defined derived classes are a class for loading the training data, and a cla
 are taken from [CSAILVision/semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) and small changes were made. The changes made to the 
 original implementations of TrainDataset and ValDataset are for loading only images of interest (images that contain wall segments). Also, inside this folder, 
 an additional function, for differentiating between the images of interest and other images, is implemented. <br/>
- - folder [Model weights](https://github.com/bjekic/WallSegmentation/tree/main/Model%20weights) - where weights of the trained models are held.<br/>
- - folder [data](https://github.com/bjekic/WallSegmentation/tree/main/data) - where the database is held, as well as files used for loading the dataset.  (The Database is not present in the directory due to size) <br/>
- - folder [cktp](https://github.com/bjekic/WallSegmentation/blob/main/ckpt/README.md) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
+ - Folder [Model weights](https://github.com/bjekic/WallSegmentation/tree/main/Model%20weights) - where weights of the trained models are held.<br/>
+ - Folder [data](https://github.com/bjekic/WallSegmentation/tree/main/data) - where the database is held, as well as files used for loading the dataset.  (The Database is not present in the directory due to size) <br/>
+ - Folder [cktp](https://github.com/bjekic/WallSegmentation/blob/main/ckpt/README.md) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
  - [train.py](https://github.com/bjekic/WallSegmentation/blob/main/train.py) - file where helper functions for training the segmentation module are implemented.<br/>
  - [eval.py](https://github.com/bjekic/WallSegmentation/blob/main/eval.py) - file where helper functions for evaluating the segmentation module are implemented. <br/>
  - [Model_training.ipynb](https://github.com/bjekic/WallSegmentation/blob/main/Model_training.ipynb) - the code for training the segmentation module on 150 different classes of the ADE20K dataset.<br/>
@@ -43,13 +43,13 @@ There are different models for training the segmentation module, described in de
 
 ## Training of the segmentation module<br/>
 
+<div dir="justify">
 The main contibution of this project is simplifying the project already available at the [link](https://github.com/CSAILVision/semantic-segmentation-pytorch) and training 
 the segmentation module only for wall segmentation. Three different approaches to training the model were considered. In all three approaches, the weights of the encoder are
 initialized using the pretrained model of ResNet50 trained on the ImageNet database. First considered approach was to use transfer learning,
 to train the model on all 150 different categories, and then to change the output layer of the decoder and train only the output layer on images of interest. The second approach
-differs from the first approach only in the last part, where not only the last layer is trained on images of interest, instead, the entire decoder is trained on images of interes. The third
-approach does not include transfer learning as described in previous two cases. Instead, the segmentation module is trained from the start on the images of interest. 
-
+differs from the first approach only in the last part, where not only the last layer is trained on images of interest, instead, the entire decoder is trained on images of interes. The third approach does not include transfer learning as described in previous two cases. Instead, the segmentation module is trained from the start on the images of interest. 
+</div>
 ## Results<br/>
 
 Mean values of pixel accuracy and IoU on validation subset are given in the table.
