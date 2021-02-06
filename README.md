@@ -10,10 +10,10 @@ An example of an image from the database:<br/>
 </p>
 
 Because for solving the problem of wall segmentation, we do not need all the images inside the ADE20K database (we need only indoor images), a subset of the database is used for
-training the Model.<br/> <br/>
+training the segmentation module.<br/> <br/>
 
 ## Segmentation architecture<br/> 
- - Encoder - obtains a feature map of the original image that has smaller height and width and a larger number of channels. The architecture of the encoder, used in this
+ - Encoder - Obtains a feature map of the original image that has smaller height and width and a larger number of channels. The architecture of the encoder, used in this
 project is the Dilated ResNet-50, where the last two blocks of the ResNet-50 architecture use dilated convolution with a smaller stride. <br/> 
  - Decoder - Based on the feature map, classifies each pixel of the feature map into one of the classes. The architecture of the decoder, used in this project is the 
 PPM architecture.<br/> <br/> 
@@ -22,11 +22,9 @@ PPM architecture.<br/> <br/>
  - Folder [Models](https://github.com/bjekic/WallSegmentation/tree/main/Models) consists of 3 seperate .py files: <br/> 
    - [resnet.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/resnet.py) - where the ResNet architecture is defined. <br/>
    - [models.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/models.py) - where the whole PPM architecture for the decoder is defined, the ResNet dilated architecture for the
-encoder, as well as the class for the Segmentation Module. Beside the classes for the different architectures, there are
+encoder, as well as the class for the segmentation module. Beside the classes for the different architectures, there are
 2 helper functions for instantiating the encoder network as well as the decoder network.<br/>
-   - [dataset.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/dataset.py) - where the derived classes of the abstract class [torch.utils.data.Dataset](https://pytorch.org/docs/stable/data.html), are defined. Two defined derived classes are classes used for loading the training data, and for loading the validation data. The implementation of the TrainDataset and ValDataset are
-are taken from [CSAILVision/semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) and small changes were made. The changes made to the 
-original implementations of TrainDataset and ValDataset are for loading only images of interest (images that contain wall segments). Also, inside this folder, an additional function, for differentiating between the images of interest and other images, is implemented. <br/>
+   - [dataset.py](https://github.com/bjekic/WallSegmentation/blob/main/Models/dataset.py) - where the derived classes of the abstract class [torch.utils.data.Dataset](https://pytorch.org/docs/stable/data.html), are defined. Two defined derived classes are classes used for loading the training data, and for loading the validation data. The implementation of the TrainDataset and ValDataset are taken from [CSAILVision/semantic-segmentation-pytorch](https://github.com/CSAILVision/semantic-segmentation-pytorch) and small changes were made. The changes made to the original implementations of TrainDataset and ValDataset are for loading only images of interest (images that contain wall regions). Also, inside this folder, an additional function, for differentiating between the images of interest and other images, is implemented. <br/>
  - Folder [Model weights](https://github.com/bjekic/WallSegmentation/tree/main/Model%20weights) - where weights of the trained models are held.<br/>
  - Folder [data](https://github.com/bjekic/WallSegmentation/tree/main/data) - where the database is held, as well as files used for loading the dataset.  (The Database is not present in the directory due to size) <br/>
  - Folder [cktp](https://github.com/bjekic/WallSegmentation/blob/main/ckpt/README.md) - where checkpoints during training of the models are saved. (Because the models are trained, the directory is now empty)<br/>
