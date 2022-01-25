@@ -2,22 +2,8 @@ import os, json, torch
 from torchvision import transforms
 import numpy as np
 from PIL import Image
-
-
-def imresize(im, size, interp='bilinear'):
-    """
-        Function for image resizing with given interpolation method
-    """
-    if interp == 'nearest':
-        resample = Image.NEAREST
-    elif interp == 'bilinear':
-        resample = Image.BILINEAR
-    elif interp == 'bicubic':
-        resample = Image.BICUBIC
-    else:
-        raise Exception('resample method undefined!')
-
-    return im.resize(size, resample)
+from Utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, LIST_SCENES
+from Utils.utils import imresize
 
 
 def create_scene_dict(path, list_scenes):
@@ -46,27 +32,20 @@ class BaseDataset(torch.utils.data.Dataset):
     """
     def __init__(self, odgt, **kwargs):
         # parse options
-        self.imgSizes = (300, 375, 450, 525, 600)
-        self.imgMaxSize = 1000
+        self.imgSizes = IMG_SIZES
+        self.imgMaxSize = IMG_MAX_SIZE
         # max down sampling rate of network to avoid rounding during conv or pooling
-        self.padding_constant = 8
+        self.padding_constant = PADDING
+        
+        self.list_scenes = LIST_SCENES
 
         # parse the input list
         self.parse_input_list(odgt, **kwargs)
 
         # mean and std
         self.normalize = transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225])
-        
-        self.list_scenes = ['bathroom','bedroom','kitchen','living_room','art_gallery','art_studio','attic','auditorium',\
-                           'shop','ballroom','bank_indoor','banquet_hall','bar','basement','bookstore','childs_room',\
-                           'classroom','room','closet','clothing_store','computer_room','conference_room','corridor',\
-                           'office','darkroom','dentists_office','diner_indoor','dinette_home','dining_room','doorway_indoor',\
-                           'dorm_room','dressing_room','entrance_hall','galley','game_room','garage_indoor','gymnasium_indoor',\
-                           'hallway','home_office','hospital_room','hotel_room','jail_cell','kindergarden_classroom',\
-                           'lecture_room','library_indoor','lobby','museum_indoor','nursery','playroom','staircase',\
-                           'television_studio','utility_room','waiting_room','warehouse_indoor','youth_hostel']
+            mean=IMAGENET_MEAN,
+            std=IMAGENET_STD) 
         
         
     def parse_input_list(self, odgt, max_sample=-1, start_idx=-1, end_idx=-1):
@@ -114,7 +93,7 @@ class TrainDataset(BaseDataset):
     """
         Train dataset class
     """
-    def __init__(self, root_dataset, odgt, batch_per_gpu=1, train_only_wall = False, **kwargs):
+    def __init__(self, root_dataset, odgt, batch_per_gpu=1, train_only_wall=True, **kwargs): #TODO changed to True for testing
         super(TrainDataset, self).__init__(odgt, **kwargs)
         
         self.train_only_wall = train_only_wall # flag that indicates whether the whole database is used or only a part
@@ -132,7 +111,8 @@ class TrainDataset(BaseDataset):
         self.cur_idx = 0
         self.if_shuffled = False
         
-        self.scene_dict, _ , num_ex_train= create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
+        self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join(self.root_dataset, 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
+        # self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
         
         if self.train_only_wall:
             print('Number of different images: ' + str(num_ex_train))
@@ -141,6 +121,9 @@ class TrainDataset(BaseDataset):
             
     
     def _get_sub_batch(self):
+        """
+            TODO: Add description
+        """
         while True:
             # Get a sample record
             this_sample = self.list_sample[self.cur_idx]
@@ -150,7 +133,7 @@ class TrainDataset(BaseDataset):
 
             # If only a subpart of the database is used, check whether the current image has the appropriate scene. If not, continue while loop.
             if self.train_only_wall:
-                scene = self.scene_dict[this_sample['fpath_img'][37:55]] # gets the scene of the particular image
+                scene = self.scene_dict[this_sample['fpath_img'][37:55]] # gets the scene of the particular image #TODO change slicing to be general
                 if scene not in self.list_scenes:
                     continue
 
@@ -278,7 +261,8 @@ class ValDataset(BaseDataset):
     def __init__(self, root_dataset, odgt, **kwargs):
         super(ValDataset, self).__init__(odgt, **kwargs)
         self.root_dataset = root_dataset
-        self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
+        # self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
+        self.scene_dict, self.num_sample, _ = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
         self.index = 0
         
     def __getitem__(self, index):        

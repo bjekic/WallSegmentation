@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from . import resnet 
 from functools import partial
-
+from Utils.constants import DEVICE
 
 class SegmentationModule(nn.Module):
     """
@@ -19,35 +19,36 @@ class SegmentationModule(nn.Module):
         """
     
         return self.decoder(
-            self.encoder(feed_dict['img_data'].to('cuda')), segSize=segSize
+            self.encoder(feed_dict['img_data'].to(DEVICE)), segSize=segSize #TODO change cuda to DEVICE from contants
         )
 
    
-def build_encoder(pretrained=True, epoch=20, train_only_wall=False):
+def build_encoder(path_encoder_weights=""):
     """
         Function for building the encoder part of the Segmentation Module
+        #TODO: Check variable train_only_wall, instead it add path to model weights
+        #TODO: Remove variable epoch, train_only_wall
+        #TODO: Instead of pretrained add default value to path_model_weights. If path_model_weights=="", same as pretrained = False
     """
+    pretrained = path_encoder_weights != ""
     orig_resnet = resnet.resnet50(pretrained=not pretrained)
     net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
-    
-    if train_only_wall:        
-        weights = 'ckpt/wall_encoder_epoch_' + str(epoch) + '.pth'
-    else:
-        weights = 'ckpt/encoder_epoch_' + str(epoch) + '.pth'
-    
+
     if pretrained:
         print('Loading weights for net_encoder')
         net_encoder.load_state_dict(
-            torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
-        
+            torch.load(path_encoder_weights, map_location=lambda storage, loc: storage), strict=False)
+
     return net_encoder
 
 
-def build_decoder(pretrained=True, epoch=20, fc_dim=2048, num_class=150, use_softmax=True,
-                   train_only_wall=False):
+def build_decoder(path_decoder_weights="", use_softmax=True, fc_dim=2048, num_class=2):
     """
         Function for building the decoder part of the Segmentation Module
-    """ 
+        #TODO: Check variable train_only_wall, instead it add path to model weights
+        #TODO: Remove variable epoch, train_only_wall
+        #TODO: Instead of pretrained add default value to path_model_weights. If path_model_weights=="", same as pretrained = False
+    """
     net_decoder = PPM(        
         num_class=num_class,
         fc_dim=fc_dim,
@@ -56,16 +57,13 @@ def build_decoder(pretrained=True, epoch=20, fc_dim=2048, num_class=150, use_sof
     net_decoder.apply(weights_init)
     
     # When flag "train_only_wall" is set to true, the last layer of decoder is set to have only 2 classes
-    if train_only_wall: 
-        net_decoder.conv_last[4] = torch.nn.Conv2d(512, 2, kernel_size=1)
-        weights = 'ckpt/wall_decoder_epoch_' + str(epoch) + '.pth'
-    else:
-        weights = 'ckpt/decoder_epoch_' + str(epoch) + '.pth'
+    net_decoder.conv_last[4] = torch.nn.Conv2d(512, 2, kernel_size=1)
     
+    pretrained = path_decoder_weights != ""
     if pretrained:        
         print('Loading weights for net_decoder')
         net_decoder.load_state_dict(            
-            torch.load(weights, map_location=lambda storage, loc: storage), strict=False)
+            torch.load(path_decoder_weights, map_location=lambda storage, loc: storage), strict=False)
     
     return net_decoder
 

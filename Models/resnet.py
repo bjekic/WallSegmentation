@@ -115,7 +115,7 @@ class ResNet(nn.Module):
         return x
     
 
-def resnet50( pretrained=False):
+def resnet50(pretrained=False):
     """
         Function for instantiating resnet50 with specific number of layers and load pretrained network if needed
     """
@@ -123,6 +123,6 @@ def resnet50( pretrained=False):
     
     # Loading pretrained resnet50
     if pretrained:
-        model.load_state_dict(torch.load( 'Model weights/resnet50-imagenet.pth', map_location=lambda storage, loc: storage),
+        model.load_state_dict(torch.load('Model_weights/resnet50-imagenet.pth', map_location=lambda storage, loc: storage),
                                strict=False)        
     return model
