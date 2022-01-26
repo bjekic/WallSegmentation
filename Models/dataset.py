@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 from Utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, LIST_SCENES
 from Utils.utils import imresize
-
+from Utils.constants import TRAIN_SUBSAMPLE_DATASET
 
 def create_scene_dict(path, list_scenes):
     """
@@ -93,10 +93,10 @@ class TrainDataset(BaseDataset):
     """
         Train dataset class
     """
-    def __init__(self, root_dataset, odgt, batch_per_gpu=1, train_only_wall=True, **kwargs): #TODO changed to True for testing
+    def __init__(self, root_dataset, odgt, batch_per_gpu=1, **kwargs): #TODO changed to True for testing
         super(TrainDataset, self).__init__(odgt, **kwargs)
         
-        self.train_only_wall = train_only_wall # flag that indicates whether the whole database is used or only a part
+        self.train_only_wall = TRAIN_SUBSAMPLE_DATASET # flag that indicates whether the whole database is used or only a part
         self.root_dataset = root_dataset
         self.num_sample = len(self.list_sample)
         
@@ -107,7 +107,7 @@ class TrainDataset(BaseDataset):
         # Classify images into two classes: 1. h > w and 2. h <= w
         self.batch_record_list = [[], []]
 
-        # Override dataset length when trainig with batch_per_gpu > 1
+        # Override dataset length when training with batch_per_gpu > 1
         self.cur_idx = 0
         self.if_shuffled = False
         
@@ -241,7 +241,7 @@ class TrainDataset(BaseDataset):
 
             # Check if training only wall, there is no need for additional labels, except 0 and 1 (where 0 represents wall and 1 represents other)
             if self.train_only_wall:
-                segm[segm>0] = 1
+                segm[segm > 0] = 1
 
             # Put into batch arrays
             batch_images[i][:, :img.shape[1], :img.shape[2]] = img

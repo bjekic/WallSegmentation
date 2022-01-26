@@ -3,44 +3,36 @@ import torch
 import torch.nn as nn
 from Models.models import SegmentationModule, build_encoder, build_decoder
 from Models.dataset import TrainDataset
-from Utils.constants import TOTAL_NUM_ITER, NUM_ITER_PER_EPOCH,  NUM_EPOCHS, OPTIMIZER_PARAMETERS
+from Utils.constants import TOTAL_NUM_ITER, NUM_ITER_PER_EPOCH, NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU
 from Utils.utils import pixel_acc
 import shutil
 from tqdm import tqdm
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 
 
-def train_one_epoch(device, segmentation_module, iterator, optimizers, epoch, crit, start_lr=0.02):
+def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writer):
     """
         Function for training model for only one epoch
     """
-    
-    # initialize helper variables for calucating average loss and accuracy in one epoch
-    total_loss = 0
-    total_acc = 0
+
     segmentation_module.train()
-    
-    # Training constants
-    total_num_iter = TOTAL_NUM_ITER
-    num_iter_per_epoch = NUM_ITER_PER_EPOCH
-     
-    start_learn_rate = start_lr
-    
-    for i in tqdm(range(num_iter_per_epoch)):
+
+    for i in tqdm(range(NUM_ITER_PER_EPOCH)):
         # load a batch of data
-        
-        batch_data = next(iterator)[0] #TODO check iterator
+        batch_data = next(iterator)[0] #TODO check iterator (it is because the batch size in the dataloader is 1, but the batch is created in TrainDataset
         segmentation_module.zero_grad() 
         
         # adjust learning rate (learning rate "poly") #TODO change to learning rate scheduler
-        cur_iter = i + (epoch - 1) * num_iter_per_epoch
-        adjust_learning_rate(optimizers, cur_iter, start_learn_rate, total_num_iter)
+        cur_iter = i + (epoch - 1) * NUM_ITER_PER_EPOCH
+        adjust_learning_rate(optimizers, cur_iter)
                 
         # forward pass
         pred = segmentation_module(batch_data)
-        
+
         # Calculate loss and accuracy
-        loss = crit(pred, batch_data['seg_label'].to(device))
-        acc  = pixel_acc(pred, batch_data['seg_label'].to(device))
+        loss = crit(pred, batch_data['seg_label'].to(DEVICE))
+        acc = pixel_acc(pred, batch_data['seg_label'].to(DEVICE))
                
         loss = loss.mean() #TODO check why mean before backward pass
         acc = acc.mean()
@@ -51,20 +43,8 @@ def train_one_epoch(device, segmentation_module, iterator, optimizers, epoch, cr
             optimizer.step()
 
         # update average loss and acc
-        total_loss += loss.data.item() #TODO change
-        total_acc += acc.data.item()*100
-
-        # Displaying epoch, iteration, average accuracy and average loss every 20 iterations
-        if i%20 == 0 and i>0:            
-            ave_total_loss = total_loss / (i+1)
-            ave_acc = total_acc / (i+1)
-            # print('Epoch: [{}][{}/{}], Accuracy: {:4.2f}, Loss: {:.6f}'
-            #       .format(epoch, i, num_iter_per_epoch, ave_acc, ave_total_loss ))
-            
-            fractional_epoch = epoch - 1 + i/num_iter_per_epoch
-            # history['train']['epoch'].append(fractional_epoch)
-            # history['train']['loss'].append(loss.data.item())
-            # history['train']['acc'].append(acc.data.item())
+        writer.add_scalar('Loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
 
 
 def checkpoint(nets, epoch, checkpoint_dir_path, is_best_epoch): 
@@ -128,22 +108,26 @@ def create_optimizers(nets, optim_parameters):
     """
     (net_encoder, net_decoder, crit) = nets
     
-    optimizer_encoder = torch.optim.SGD(
-        group_weight(net_encoder), lr=optim_parameters["LEARNING_RATE"], momentum=optim_parameters["MOMENTUM"],
-        weight_decay=optim_parameters["WEIGHT_DECAY"] )
+    optimizer_encoder = torch.optim.SGD(group_weight(net_encoder),
+                                        lr=optim_parameters["LEARNING_RATE"],
+                                        momentum=optim_parameters["MOMENTUM"],
+                                        weight_decay=optim_parameters["WEIGHT_DECAY"])
     
-    optimizer_decoder = torch.optim.SGD(
-        group_weight(net_decoder), lr=optim_parameters["LEARNING_RATE"], momentum=optim_parameters["MOMENTUM"],
-        weight_decay=optim_parameters["WEIGHT_DECAY"] )
+    optimizer_decoder = torch.optim.SGD(group_weight(net_decoder),
+                                        lr=optim_parameters["LEARNING_RATE"],
+                                        momentum=optim_parameters["MOMENTUM"],
+                                        weight_decay=optim_parameters["WEIGHT_DECAY"])
         
-    return (optimizer_encoder, optimizer_decoder)
+    return optimizer_encoder, optimizer_decoder
 
 
-def adjust_learning_rate(optimizers, cur_iter, start_lr=0.02, total_num_iter=1e5 ):
+def adjust_learning_rate(optimizers, cur_iter):
     """
         Adjusting learning rate in each iteration
     """
-    scale_running_lr = ((1 - cur_iter/total_num_iter)** 0.9)
+    scale_running_lr = ((1 - cur_iter/TOTAL_NUM_ITER) ** 0.9)
+    start_lr = OPTIMIZER_PARAMETERS["LEARNING_RATE"]
+
     lr_encoder = start_lr * scale_running_lr
     lr_decoder = start_lr * scale_running_lr
 
@@ -157,13 +141,17 @@ def adjust_learning_rate(optimizers, cur_iter, start_lr=0.02, total_num_iter=1e5
 def stupid_collate_fn(x):
     return x
 
-def main_train(device, data_root_path, continue_training, ckpt_dir_path, path_encoder_weights="", path_decoder_weights=""):
+def main_train(ckpt_dir_path,
+               data_root_path,
+               continue_training=False,
+               path_encoder_weights="",
+               path_decoder_weights=""):
     """
         Main function for training original encoder/decoder architecture for semantic segmentation of 150 classes,
         with an option to start from pretrained model, trained in last_epoch_trained
         TODO: Change the name of this function, to be more clear what each of these train functions does
     """
-    # Network Builders
+    # Encoder/Decoder weights
     if continue_training:
         last_epoch = [int(x.split('.')[0].split('_')[-1]) for x in os.listdir(ckpt_dir_path) if x.startswith('encoder_epoch_')][0]
         path_encoder_weights = os.path.join(ckpt_dir_path, f'encoder_epoch_{last_epoch}.pth')
@@ -182,16 +170,16 @@ def main_train(device, data_root_path, continue_training, ckpt_dir_path, path_en
     crit = nn.NLLLoss(ignore_index=-1) 
     
     # Creating Segmentation Module
-    segmentation_module = SegmentationModule(net_encoder, net_decoder).to(device)
+    segmentation_module = SegmentationModule(net_encoder, net_decoder).to(DEVICE)
     
     # Dataset and Loader
-    dataset_train = TrainDataset(data_root_path, "data/training.odgt", batch_per_gpu=2) # TODO check TrainDataset, change batch_per_gpu to be from constants.py
+    dataset_train = TrainDataset(data_root_path, ODGT_TRAINING, batch_per_gpu=BATCH_PER_GPU) # TODO check TrainDataset, change batch_per_gpu to be from constants.py
     
     loader_train = torch.utils.data.DataLoader(dataset_train,
-                                               batch_size=1,
+                                               batch_size=1, # TODO: write why it is one (because the batch is created in TrainDataset)
                                                shuffle=False,
                                                collate_fn=stupid_collate_fn,
-                                               num_workers=0, #TODO change to parameter from config.json/contants.py
+                                               num_workers=NUM_WORKERS, #TODO change to parameter from config.json/contants.py
                                                drop_last=True,
                                                pin_memory=True)
 
@@ -202,23 +190,26 @@ def main_train(device, data_root_path, continue_training, ckpt_dir_path, path_en
     nets = (net_encoder, net_decoder, crit)
     optimizers = create_optimizers(nets, OPTIMIZER_PARAMETERS)
 
-    # history = {'train': {'epoch': [], 'loss': [], 'acc': []}}
+    # Tensorboard initialization
+    dt_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    writer = SummaryWriter(f'tensorboard/training_{dt_string}')
     
     print('Starting training')
-    
     # Main loop of certain number of epochs
     for epoch in range(last_epoch, NUM_EPOCHS):
-        train_one_epoch(device, segmentation_module, iterator_train, optimizers, epoch+1, crit)
+        print(f'Training epoch {epoch + 1}/{NUM_EPOCHS}...')
+        train_one_epoch(segmentation_module, iterator_train, optimizers, epoch+1, crit, writer)
         checkpoint(nets, epoch + 1, ckpt_dir_path, False) #TODO add validation step
 
+    writer.close()
     print('Training Done!')
 
-
-def main_train_wall(device, train_all=False, train_decoder_all=False, start_lr=0.02, last_epoch_trained=0):
-    """
+"""
+def main_train_wall(DEVICE, train_all=False, train_decoder_all=False, start_lr=0.02, last_epoch_trained=0):
+    ""
         Main function for training encoder/decoder architecture for semantic segmentation of only wall
         TODO: Change the name of this function, to be more clear what each of these train functions does
-    """
+    ""
     
     if last_epoch_trained > 0: # When training starts from the previous version of the model
         net_encoder = build_encoder(pretrained=True, epoch=last_epoch_trained, train_only_wall=True)
@@ -248,7 +239,7 @@ def main_train_wall(device, train_all=False, train_decoder_all=False, start_lr=0
         net_decoder.conv_last[4] = nn.Conv2d(512, 2, kernel_size=(1, 1), stride=(1, 1))
     
     # Creating Segmentation Module
-    segmentation_module = SegmentationModule(net_encoder, net_decoder).to(device)
+    segmentation_module = SegmentationModule(net_encoder, net_decoder).to(DEVICE)
     
     # Dataset and Loader
     dataset_train = TrainDataset("data/", "data/training.odgt", batch_per_gpu=2, train_only_wall=True)
@@ -263,7 +254,7 @@ def main_train_wall(device, train_all=False, train_decoder_all=False, start_lr=0
         pin_memory=True)
     
     # Creating criterion. In the dataset there are labels -1 which stand for "don't care/background", so should be ommited during training
-    crit = nn.NLLLoss(ignore_index=-1, weight=torch.tensor([1, 1], dtype=torch.float).to(device))
+    crit = nn.NLLLoss(ignore_index=-1, weight=torch.tensor([1, 1], dtype=torch.float).to(DEVICE))
     
     # create loader iterator
     iterator_train = iter(loader_train)
@@ -278,7 +269,7 @@ def main_train_wall(device, train_all=False, train_decoder_all=False, start_lr=0
     # Main loop of certain number of epochs
     print('Starting wall training:')
     for epoch in range(last_epoch_trained, NUM_EPOCHS):
-        train_one_epoch(device, segmentation_module, iterator_train, optimizers, history, epoch+1, crit, start_lr=start_lr)
+        train_one_epoch(DEVICE, segmentation_module, iterator_train, optimizers, history, epoch+1, crit, start_lr=start_lr)
         checkpoint(nets, history, epoch+1, train_only_wall=True)
 
-    print('Wall Learning training Done!')
+    print('Wall Learning training Done!')"""
