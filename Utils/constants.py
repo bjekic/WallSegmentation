@@ -35,3 +35,4 @@ OPTIMIZER_PARAMETERS = {
 
 
 ODGT_TRAINING = "data/training.odgt"
+ODGT_EVALUTATION = "data/validation.odgt"

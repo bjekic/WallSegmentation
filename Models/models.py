@@ -57,7 +57,7 @@ def build_decoder(path_decoder_weights="", use_softmax=True, fc_dim=2048, num_cl
     net_decoder.apply(weights_init)
     
     # When flag "train_only_wall" is set to true, the last layer of decoder is set to have only 2 classes
-    net_decoder.conv_last[4] = torch.nn.Conv2d(512, 2, kernel_size=1)
+    # net_decoder.conv_last[4] = torch.nn.Conv2d(512, 2, kernel_size=1)
     
     pretrained = path_decoder_weights != ""
     if pretrained:        
@@ -181,7 +181,7 @@ class PPM(nn.Module):
 
         x = self.conv_last(ppm_out)
 
-        if self.use_softmax:  # is True during inference
+        if segSize:  # is True during inference
             x = nn.functional.interpolate(x, size=segSize, mode='bilinear', align_corners=False)
             x = nn.functional.softmax(x, dim=1)
         else:        

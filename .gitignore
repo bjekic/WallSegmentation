@@ -1,4 +1,6 @@
 .idea
 Proba*
 *.pth
+__pycache__
 configs/*
+!configs/config.json

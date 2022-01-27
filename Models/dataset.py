@@ -19,10 +19,10 @@ def create_scene_dict(path, list_scenes):
         temp = line.split(' ')
         scene = temp[1][:-1]
         dict_scene[temp[0]] = scene
-        if scene in list_scenes and temp[0][:7]=='ADE_val':
-            counter_val +=1
-        if scene in list_scenes and temp[0][:9]=='ADE_train':
-            counter_train +=1
+        if scene in list_scenes and temp[0][:7] == 'ADE_val':
+            counter_val += 1
+        if scene in list_scenes and temp[0][:9] == 'ADE_train':
+            counter_train += 1
     return dict_scene, counter_val, counter_train
 
 
@@ -143,7 +143,7 @@ class TrainDataset(BaseDataset):
                 self.batch_record_list[1].append(this_sample) # h <= w, go to 2nd class
 
             if self.cur_idx >= self.num_sample:
-                self.ccccur_idx = 0
+                self.cur_idx = 0
                 np.random.shuffle(self.list_sample)
 
             if len(self.batch_record_list[0]) == self.batch_per_gpu:
@@ -250,7 +250,7 @@ class TrainDataset(BaseDataset):
         return {'img_data': batch_images, 'seg_label': batch_segms}
 
     def __len__(self):
-        return int(1e6) # It's a fake length due to the trick that every loader maintains its own list
+        return int(1e6)  # It's a fake length due to the trick that every loader maintains its own list
    
 
 class ValDataset(BaseDataset):
@@ -261,8 +261,8 @@ class ValDataset(BaseDataset):
     def __init__(self, root_dataset, odgt, **kwargs):
         super(ValDataset, self).__init__(odgt, **kwargs)
         self.root_dataset = root_dataset
-        # self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
-        self.scene_dict, self.num_sample, _ = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
+        self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
+        # self.scene_dict, self.num_sample, _ = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
         self.index = 0
         
     def __getitem__(self, index):        
@@ -282,7 +282,7 @@ class ValDataset(BaseDataset):
         img = self.img_transform(img)
         segm = self.segm_transform(segm)
 
-        segm[segm>0] = 1
+        segm[segm > 0] = 1
 
         return {
             'img_data': img[None],

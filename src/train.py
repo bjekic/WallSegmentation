@@ -1,14 +1,14 @@
 import os
 import torch
 import torch.nn as nn
-from Models.models import SegmentationModule, build_encoder, build_decoder
-from Models.dataset import TrainDataset
 from Utils.constants import TOTAL_NUM_ITER, NUM_ITER_PER_EPOCH, NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU
 from Utils.utils import pixel_acc
-import shutil
 from tqdm import tqdm
+import shutil
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
+from Models.models import SegmentationModule, build_encoder, build_decoder
+from Models.dataset import TrainDataset
 
 
 def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writer):
@@ -138,71 +138,71 @@ def adjust_learning_rate(optimizers, cur_iter):
         param_group['lr'] = lr_decoder
 
 
-def stupid_collate_fn(x):
-    return x
-
-def main_train(ckpt_dir_path,
-               data_root_path,
-               continue_training=False,
-               path_encoder_weights="",
-               path_decoder_weights=""):
-    """
-        Main function for training original encoder/decoder architecture for semantic segmentation of 150 classes,
-        with an option to start from pretrained model, trained in last_epoch_trained
-        TODO: Change the name of this function, to be more clear what each of these train functions does
-    """
-    # Encoder/Decoder weights
-    if continue_training:
-        last_epoch = [int(x.split('.')[0].split('_')[-1]) for x in os.listdir(ckpt_dir_path) if x.startswith('encoder_epoch_')][0]
-        path_encoder_weights = os.path.join(ckpt_dir_path, f'encoder_epoch_{last_epoch}.pth')
-        path_decoder_weights = os.path.join(ckpt_dir_path, f'decoder_epoch_{last_epoch}.pth')
-        print(f"The training will continue from {last_epoch + 1} epoch...")
-    else:
-        last_epoch = 0
-        if os.path.exists(ckpt_dir_path):
-            shutil.rmtree(ckpt_dir_path)
-        os.mkdir(ckpt_dir_path)
-    
-    net_encoder = build_encoder(path_encoder_weights)
-    net_decoder = build_decoder(path_decoder_weights, use_softmax=False)
-        
-    # Creating criterion. In the dataset there are labels -1 which stand for "don't care", so should be ommited during training.
-    crit = nn.NLLLoss(ignore_index=-1) 
-    
-    # Creating Segmentation Module
-    segmentation_module = SegmentationModule(net_encoder, net_decoder).to(DEVICE)
-    
-    # Dataset and Loader
-    dataset_train = TrainDataset(data_root_path, ODGT_TRAINING, batch_per_gpu=BATCH_PER_GPU) # TODO check TrainDataset, change batch_per_gpu to be from constants.py
-    
-    loader_train = torch.utils.data.DataLoader(dataset_train,
-                                               batch_size=1, # TODO: write why it is one (because the batch is created in TrainDataset)
-                                               shuffle=False,
-                                               collate_fn=stupid_collate_fn,
-                                               num_workers=NUM_WORKERS, #TODO change to parameter from config.json/contants.py
-                                               drop_last=True,
-                                               pin_memory=True)
-
-    # create loader iterator
-    iterator_train = iter(loader_train)
-
-    # Set up optimizers
-    nets = (net_encoder, net_decoder, crit)
-    optimizers = create_optimizers(nets, OPTIMIZER_PARAMETERS)
-
-    # Tensorboard initialization
-    dt_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    writer = SummaryWriter(f'tensorboard/training_{dt_string}')
-    
-    print('Starting training')
-    # Main loop of certain number of epochs
-    for epoch in range(last_epoch, NUM_EPOCHS):
-        print(f'Training epoch {epoch + 1}/{NUM_EPOCHS}...')
-        train_one_epoch(segmentation_module, iterator_train, optimizers, epoch+1, crit, writer)
-        checkpoint(nets, epoch + 1, ckpt_dir_path, False) #TODO add validation step
-
-    writer.close()
-    print('Training Done!')
+# def stupid_collate_fn(x):
+#     return x
+#
+# def main_train(ckpt_dir_path,
+#                data_root_path,
+#                continue_training=False,
+#                path_encoder_weights="",
+#                path_decoder_weights=""):
+#     """
+#         Main function for training original encoder/decoder architecture for semantic segmentation of 150 classes,
+#         with an option to start from pretrained model, trained in last_epoch_trained
+#         TODO: Change the name of this function, to be more clear what each of these train functions does
+#     """
+#     # Encoder/Decoder weights
+#     if continue_training:
+#         last_epoch = [int(x.split('.')[0].split('_')[-1]) for x in os.listdir(ckpt_dir_path) if x.startswith('encoder_epoch_')][0]
+#         path_encoder_weights = os.path.join(ckpt_dir_path, f'encoder_epoch_{last_epoch}.pth')
+#         path_decoder_weights = os.path.join(ckpt_dir_path, f'decoder_epoch_{last_epoch}.pth')
+#         print(f"The training will continue from {last_epoch + 1} epoch...")
+#     else:
+#         last_epoch = 0
+#         if os.path.exists(ckpt_dir_path):
+#             shutil.rmtree(ckpt_dir_path)
+#         os.mkdir(ckpt_dir_path)
+#
+#     net_encoder = build_encoder(path_encoder_weights)
+#     net_decoder = build_decoder(path_decoder_weights, use_softmax=False)
+#
+#     # Creating criterion. In the dataset there are labels -1 which stand for "don't care", so should be ommited during training.
+#     crit = nn.NLLLoss(ignore_index=-1)
+#
+#     # Creating Segmentation Module
+#     segmentation_module = SegmentationModule(net_encoder, net_decoder).to(DEVICE)
+#
+#     # Dataset and Loader
+#     dataset_train = TrainDataset(data_root_path, ODGT_TRAINING, batch_per_gpu=BATCH_PER_GPU) # TODO check TrainDataset, change batch_per_gpu to be from constants.py
+#
+#     loader_train = torch.utils.data.DataLoader(dataset_train,
+#                                                batch_size=1, # TODO: write why it is one (because the batch is created in TrainDataset)
+#                                                shuffle=False,
+#                                                collate_fn=stupid_collate_fn,
+#                                                num_workers=NUM_WORKERS, #TODO change to parameter from config.json/contants.py
+#                                                drop_last=True,
+#                                                pin_memory=True)
+#
+#     # create loader iterator
+#     iterator_train = iter(loader_train)
+#
+#     # Set up optimizers
+#     nets = (net_encoder, net_decoder, crit)
+#     optimizers = create_optimizers(nets, OPTIMIZER_PARAMETERS)
+#
+#     # Tensorboard initialization
+#     dt_string = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+#     writer = SummaryWriter(os.path.join(ckpt_dir_path, 'tensorboard'))
+#
+#     print('Starting training')
+#     # Main loop of certain number of epochs
+#     for epoch in range(last_epoch, NUM_EPOCHS):
+#         print(f'Training epoch {epoch + 1}/{NUM_EPOCHS}...')
+#         train_one_epoch(segmentation_module, iterator_train, optimizers, epoch+1, crit, writer)
+#         checkpoint(nets, epoch + 1, ckpt_dir_path, False) #TODO add validation step
+#
+#     writer.close()
+#     print('Training Done!')
 
 """
 def main_train_wall(DEVICE, train_all=False, train_decoder_all=False, start_lr=0.02, last_epoch_trained=0):

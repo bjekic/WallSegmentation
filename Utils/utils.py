@@ -35,18 +35,19 @@ def pixel_acc(pred, label):
         Function for calculating the pixel accuracy between the predicted image and labeled image
     """
     _, preds = torch.max(pred, dim=1)
-    valid = (label>=0).long() # some labels are -1 and are ignored
-    acc_sum = torch.sum(valid * (preds==label).long())
-    pixel_sum = torch.sum(valid)
-    return acc_sum.float() / (pixel_sum.float() + 1e-10)
+    valid = (label >= 0)  # some labels are -1 and are ignored
+    acc_sum = (valid * (preds == label)).sum()
+    pixel_sum = valid.sum()
+    return acc_sum / (pixel_sum + 1e-10)
 
 
-def IOU(preds, labels):
+def IOU(pred, labels):
     """
         Function for calculating IOU of an image
     """
-    intersection = sum(sum((preds==0) * (labels==0)))
-    union = sum(sum((preds==0) + (labels==0))) + 1e-15 # protection from division with 0
+    _, preds = torch.max(pred, dim=1)
+    intersection = ((preds == 0) * (labels == 0)).sum()
+    union = ((preds == 0) + (labels == 0)).sum() + 1e-15  # protection from division with 0
     return intersection / union
 
 
