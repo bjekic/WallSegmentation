@@ -4,16 +4,13 @@ import shutil
 import torch
 import torch.nn as nn
 from Models.models import SegmentationModule, build_encoder, build_decoder
-from Models.dataset import TrainDataset
-from Utils.constants import NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU
+from Models.dataset import TrainDataset, ValDataset
+from Utils.constants import NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU, ODGT_EVALUTATION
 from torch.utils.tensorboard import SummaryWriter
 from src.train import create_optimizers, train_one_epoch, checkpoint
-from src.eval import main_evaluate
+from src.eval import validation_step
 import pickle
-
-
-def stupid_collate_fn(x):
-    return x
+from Utils.utils import not_None_collate
 
 
 def main_train(ckpt_dir_path,
@@ -24,6 +21,7 @@ def main_train(ckpt_dir_path,
     """
         Main function for training original encoder/decoder architecture for semantic segmentation of 150 classes,
         with an option to start from pretrained model, trained in last_epoch_trained
+        # TODO: change description
         TODO: Change the name of this function, to be more clear what each of these train functions does
     """
     # Encoder/Decoder weights
@@ -39,7 +37,7 @@ def main_train(ckpt_dir_path,
         os.mkdir(ckpt_dir_path)
 
     net_encoder = build_encoder(path_encoder_weights)
-    net_decoder = build_decoder(path_decoder_weights, use_softmax=False)
+    net_decoder = build_decoder(path_decoder_weights)
 
     # Creating criterion. In the dataset there are labels -1 which stand for "don't care", so should be ommited during training.
     crit = nn.NLLLoss(ignore_index=-1)
@@ -53,13 +51,20 @@ def main_train(ckpt_dir_path,
     loader_train = torch.utils.data.DataLoader(dataset_train,
                                                batch_size=1, # TODO: write why it is one (because the batch is created in TrainDataset)
                                                shuffle=False,
-                                               collate_fn=stupid_collate_fn,
+                                               collate_fn=not_None_collate,
                                                num_workers=NUM_WORKERS, # TODO change to parameter from config.json/contants.py
                                                drop_last=True,
                                                pin_memory=True)
-
-    # create loader iterator
+    
+    # Create training loader iterator
     iterator_train = iter(loader_train)
+    
+    dataset_val = ValDataset(data_root_path, ODGT_EVALUTATION)
+    loader_val = torch.utils.data.DataLoader(dataset_val,
+                                             batch_size=1,  # it has to be 1, because images are not the same size
+                                             shuffle=False,
+                                             collate_fn=lambda x: x,
+                                             drop_last=True)
 
     # Set up optimizers
     nets = (net_encoder, net_decoder, crit)
@@ -80,7 +85,11 @@ def main_train(ckpt_dir_path,
     for epoch in range(last_epoch, NUM_EPOCHS):
         print(f'Training epoch {epoch + 1}/{NUM_EPOCHS}...')
         train_one_epoch(segmentation_module, iterator_train, optimizers, epoch + 1, crit, writer)
-        acc, IOU = main_evaluate(segmentation_module, data_root_path, writer, epoch+1)
+        
+        print(f'Starting evaluation after epoch {epoch}')
+        acc, IOU = validation_step(segmentation_module, loader_val, writer, epoch + 1)
+        print('Evaluation Done!')
+                
         if acc > train_metadata['best_acc']:
             train_metadata['best_acc'] = acc
             train_metadata['best_IOU'] = IOU
@@ -94,7 +103,7 @@ def main_train(ckpt_dir_path,
 
     writer.close()
     print('Training Done!')
-
+    
 
 if __name__ == '__main__':
 

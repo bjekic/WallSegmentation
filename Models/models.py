@@ -2,33 +2,29 @@ import torch
 import torch.nn as nn
 from . import resnet 
 from functools import partial
-from Utils.constants import DEVICE
+from Utils.constants import DEVICE, FC_DIM, NUM_CLASSES
+
 
 class SegmentationModule(nn.Module):
     """
         Segmentation Module class
     """
-    def __init__(self, net_enc, net_dec):
+    def __init__(self, net_encoder, net_decoder):
         super(SegmentationModule, self).__init__()
-        self.encoder = net_enc
-        self.decoder = net_dec
+        self.encoder = net_encoder
+        self.decoder = net_decoder
         
-    def forward(self, feed_dict, segSize=None):
+    def forward(self, input_dict, segSize=None):
         """
         Forward pass of Segmentation Module
         """
     
-        return self.decoder(
-            self.encoder(feed_dict['img_data'].to(DEVICE)), segSize=segSize #TODO change cuda to DEVICE from contants
-        )
+        return self.decoder(self.encoder(input_dict['img_data'].to(DEVICE)), segSize=segSize)
 
    
 def build_encoder(path_encoder_weights=""):
     """
         Function for building the encoder part of the Segmentation Module
-        #TODO: Check variable train_only_wall, instead it add path to model weights
-        #TODO: Remove variable epoch, train_only_wall
-        #TODO: Instead of pretrained add default value to path_model_weights. If path_model_weights=="", same as pretrained = False
     """
     pretrained = path_encoder_weights != ""
     orig_resnet = resnet.resnet50(pretrained=not pretrained)
@@ -42,28 +38,21 @@ def build_encoder(path_encoder_weights=""):
     return net_encoder
 
 
-def build_decoder(path_decoder_weights="", use_softmax=True, fc_dim=2048, num_class=2):
+def build_decoder(path_decoder_weights=""):
     """
         Function for building the decoder part of the Segmentation Module
-        #TODO: Check variable train_only_wall, instead it add path to model weights
-        #TODO: Remove variable epoch, train_only_wall
-        #TODO: Instead of pretrained add default value to path_model_weights. If path_model_weights=="", same as pretrained = False
     """
     net_decoder = PPM(        
-        num_class=num_class,
-        fc_dim=fc_dim,
-        use_softmax=use_softmax)
-    
-    net_decoder.apply(weights_init)
-    
-    # When flag "train_only_wall" is set to true, the last layer of decoder is set to have only 2 classes
-    # net_decoder.conv_last[4] = torch.nn.Conv2d(512, 2, kernel_size=1)
+        num_class=NUM_CLASSES,
+        fc_dim=FC_DIM)
     
     pretrained = path_decoder_weights != ""
     if pretrained:        
         print('Loading weights for net_decoder')
         net_decoder.load_state_dict(            
             torch.load(path_decoder_weights, map_location=lambda storage, loc: storage), strict=False)
+    else:
+        net_decoder.apply(weights_init) 
     
     return net_decoder
 
@@ -144,9 +133,8 @@ class PPM(nn.Module):
     """
         Pyramid Pooling Module (PPM) class
     """
-    def __init__(self, num_class=150, fc_dim=4096, use_softmax=False, pool_scales=(1, 2, 3, 6)):
+    def __init__(self, num_class, fc_dim, pool_scales=(1, 2, 3, 6)):
         super(PPM, self).__init__()
-        self.use_softmax = use_softmax
 
         self.ppm = []
         for scale in pool_scales:

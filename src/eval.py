@@ -1,4 +1,5 @@
 import os, torch, PIL, torchvision.transforms
+from tkinter import Image
 import numpy as np
 from Models.models import SegmentationModule, build_encoder, build_decoder
 from Models.dataset import ValDataset
@@ -9,7 +10,7 @@ from Utils.constants import DEVICE, ODGT_EVALUTATION
 # from tensorboard import SummaryWriter
 from tqdm import tqdm
 
-def evaluate(segmentation_module, loader, writer, epoch):
+def validation_step(segmentation_module, loader, writer, epoch):
     """
         Function for evaluating the segmentation module on validation dataset
     """
@@ -72,8 +73,6 @@ def eval_one_img(segmentation_module, device, image_folder_path, annotations_fol
     
     img_str = str(img_number)
     img_str_padded = img_str.zfill(8)
-    # img = PIL.Image.open(root_path + 'ADEChallengeData2016/images/validation/ADE_val_' + img_str_padded + '.jpg').convert('RGB')
-    # segm = PIL.Image.open(root_path + 'ADEChallengeData2016/annotations/validation/ADE_val_' + img_str_padded + '.png')
     
     img = PIL.Image.open(os.path.join(image_folder_path, f"ADE_val_{img_str_padded}.jpg")).convert('RGB')
     segm = PIL.Image.open(os.path.join(annotations_folder_path, f"ADE_val_{img_str_padded}.png"))
@@ -99,49 +98,31 @@ def eval_one_img(segmentation_module, device, image_folder_path, annotations_fol
     visualize_wall(img_original, pred)
     
     return acc, img_IOU
+    
 
-
-def main_evaluate(segmentation_module, data_root_path, writer, epoch):
+def segment_image(segmentation_module, img):
     """
-        Function for evaluating Segmentation module
+        Function for segmenting wall in the input image
     """
-    # TODO: Change this function to be more intuitive
+    pil_to_tensor = torchvision.transforms.Compose([
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize(
+            mean=IMAGENET_MEAN, # These are RGB mean+std values
+            std=IMAGENET_STD)  # across a large photo dataset.
+        ])
 
-    # Dataset and Loader
-    dataset_val = ValDataset(data_root_path, ODGT_EVALUTATION)
-    loader_val = torch.utils.data.DataLoader(dataset_val,
-                                             batch_size=1,  # it has to be 1, because images are not the same size
-                                             shuffle=False,
-                                             collate_fn=lambda x: x,
-                                             drop_last=True)
+    if isinstance(img, str):
+        img = Image.open(img)
     
-    print(f'Starting evaluation after epoch {epoch}')
-    avg_acc, avg_IOU = evaluate(segmentation_module, loader_val, writer, epoch)
-    print('Evaluation Done!\n')
-    
-    return avg_acc, avg_IOU
-    
+    img_original = np.array(img)
+    img_data = pil_to_tensor(img)
+    singleton_batch = {'img_data': img_data[None].to(DEVICE)}
+    segSize = img_original.shape[:2]
 
-# def segment_image(segmentation_module, img, device):
-#     """
-#         Function for segmenting wall in the input image
-#     """
-#     pil_to_tensor = torchvision.transforms.Compose([
-#         torchvision.transforms.ToTensor(),
-#         torchvision.transforms.Normalize(
-#             mean=IMAGENET_MEAN, # These are RGB mean+std values
-#             std=IMAGENET_STD)  # across a large photo dataset.
-#         ])
-#
-#     img_original = np.array(img)
-#     img_data = pil_to_tensor(img)
-#     singleton_batch = {'img_data': img_data[None].to(device)}
-#     segSize = img_original.shape[:2]
-#
-#     with torch.no_grad():
-#         scores = segmentation_module(singleton_batch, segSize=segSize)
-#
-#     _, pred = torch.max(scores, dim=1)
-#     pred = pred.cpu()[0].numpy()
-#
-#     visualize_wall(img_original, pred)
+    with torch.no_grad():
+        scores = segmentation_module(singleton_batch, segSize=segSize)
+
+    _, pred = torch.max(scores, dim=1)
+    pred = pred.cpu()[0].numpy()
+
+    visualize_wall(img_original, pred)

@@ -34,7 +34,7 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
         loss = crit(pred, batch_data['seg_label'].to(DEVICE))
         acc = pixel_acc(pred, batch_data['seg_label'].to(DEVICE))
                
-        loss = loss.mean() #TODO check why mean before backward pass
+        loss = loss.mean()
         acc = acc.mean()
 
         # Backward pass
@@ -43,8 +43,8 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
             optimizer.step()
 
         # update average loss and acc
-        writer.add_scalar('Loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
-        writer.add_scalar('Accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Trainig loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Trainig accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
 
 
 def checkpoint(nets, epoch, checkpoint_dir_path, is_best_epoch): 

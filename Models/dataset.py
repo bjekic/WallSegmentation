@@ -2,9 +2,10 @@ import os, json, torch
 from torchvision import transforms
 import numpy as np
 from PIL import Image
-from Utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, LIST_SCENES
+from Utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, \
+                            LIST_SCENES, TRAIN_SUBSAMPLE_DATASET, SCENE_CATEGORIES, SEGM_DOWNSAMPLING_RATE
 from Utils.utils import imresize
-from Utils.constants import TRAIN_SUBSAMPLE_DATASET
+
 
 def create_scene_dict(path, list_scenes):
     """
@@ -19,9 +20,9 @@ def create_scene_dict(path, list_scenes):
         temp = line.split(' ')
         scene = temp[1][:-1]
         dict_scene[temp[0]] = scene
-        if scene in list_scenes and temp[0][:7] == 'ADE_val':
+        if scene in list_scenes and temp.startswith('ADE_val'):
             counter_val += 1
-        if scene in list_scenes and temp[0][:9] == 'ADE_train':
+        if scene in list_scenes and temp.startswith('ADE_train'):
             counter_train += 1
     return dict_scene, counter_val, counter_train
 
@@ -31,12 +32,10 @@ class BaseDataset(torch.utils.data.Dataset):
         Base custom dataset class
     """
     def __init__(self, odgt, **kwargs):
-        # parse options
         self.imgSizes = IMG_SIZES
         self.imgMaxSize = IMG_MAX_SIZE
-        # max down sampling rate of network to avoid rounding during conv or pooling
-        self.padding_constant = PADDING
         
+        self.padding_constant = PADDING
         self.list_scenes = LIST_SCENES
 
         # parse the input list
@@ -48,7 +47,7 @@ class BaseDataset(torch.utils.data.Dataset):
             std=IMAGENET_STD) 
         
         
-    def parse_input_list(self, odgt, max_sample=-1, start_idx=-1, end_idx=-1):
+    def parse_input_list(self, odgt):
         """
             Function for parsing input list
         """
@@ -57,11 +56,6 @@ class BaseDataset(torch.utils.data.Dataset):
         elif isinstance(odgt, str):
             self.list_sample = [json.loads(x.rstrip()) for x in open(odgt, 'r')]
 
-        if max_sample > 0:
-            self.list_sample = self.list_sample[:max_sample]
-            
-        if start_idx >= 0 and end_idx >= 0:     # divide file list
-            self.list_sample = self.list_sample[start_idx:end_idx]
 
     def img_transform(self, img):
         """
@@ -76,8 +70,6 @@ class BaseDataset(torch.utils.data.Dataset):
     def segm_transform(self, segm):
         """
             Function for transorming segmentation mask from numpy array to tensor with values in the range [-1, 149]
-            # TODO: Change the name of this function
-
         """
         segm = torch.from_numpy(np.array(segm)).long() - 1
         return segm
@@ -93,15 +85,15 @@ class TrainDataset(BaseDataset):
     """
         Train dataset class
     """
-    def __init__(self, root_dataset, odgt, batch_per_gpu=1, **kwargs): #TODO changed to True for testing
+    def __init__(self, root_dataset, odgt, batch_per_gpu=1, **kwargs):
         super(TrainDataset, self).__init__(odgt, **kwargs)
         
-        self.train_only_wall = TRAIN_SUBSAMPLE_DATASET # flag that indicates whether the whole database is used or only a part
+        self.train_subsample_dataset = TRAIN_SUBSAMPLE_DATASET # flag that indicates whether the whole database is used or only a part
         self.root_dataset = root_dataset
         self.num_sample = len(self.list_sample)
         
         # Down sampling rate of segm label
-        self.segm_downsampling_rate = 8
+        self.segm_downsampling_rate = SEGM_DOWNSAMPLING_RATE
         self.batch_per_gpu = batch_per_gpu
 
         # Classify images into two classes: 1. h > w and 2. h <= w
@@ -111,13 +103,12 @@ class TrainDataset(BaseDataset):
         self.cur_idx = 0
         self.if_shuffled = False
         
-        self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join(self.root_dataset, 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
-        # self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
+        self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join(self.root_dataset, SCENE_CATEGORIES), self.list_scenes)
         
-        if self.train_only_wall:
-            print('Number of different images: ' + str(num_ex_train))
+        if self.train_subsample_dataset:
+            print(f'Number of different images: {num_ex_train}')
         else:
-            print('Number of different images: 20210')
+            print(f'Number of different images: {self.num_sample}')
             
     
     def _get_sub_batch(self):
@@ -130,10 +121,15 @@ class TrainDataset(BaseDataset):
 
             # Update current sample pointer
             self.cur_idx += 1
+            
+            if self.cur_idx >= self.num_sample:
+                self.cur_idx = 0
+                np.random.shuffle(self.list_sample)
 
             # If only a subpart of the database is used, check whether the current image has the appropriate scene. If not, continue while loop.
-            if self.train_only_wall:
-                scene = self.scene_dict[this_sample['fpath_img'][37:55]] # gets the scene of the particular image #TODO change slicing to be general
+            if self.train_subsample_dataset:
+                this_sample_name = this_sample['fpath_img'].split(".")[0].split(os.path.sep)[-1]
+                scene = self.scene_dict[this_sample_name] # gets the scene of the particular image
                 if scene not in self.list_scenes:
                     continue
 
@@ -141,10 +137,6 @@ class TrainDataset(BaseDataset):
                 self.batch_record_list[0].append(this_sample) # h > w, go to 1st class
             else:
                 self.batch_record_list[1].append(this_sample) # h <= w, go to 2nd class
-
-            if self.cur_idx >= self.num_sample:
-                self.cur_idx = 0
-                np.random.shuffle(self.list_sample)
 
             if len(self.batch_record_list[0]) == self.batch_per_gpu:
                 batch_records = self.batch_record_list[0]
@@ -179,9 +171,8 @@ class TrainDataset(BaseDataset):
         batch_heights = np.zeros(self.batch_per_gpu, np.int32)
         for i in range(self.batch_per_gpu):
             img_height, img_width = batch_records[i]['height'], batch_records[i]['width']
-            this_scale = min(
-                this_short_size / min(img_height, img_width), \
-                self.imgMaxSize / max(img_height, img_width))
+            this_scale = min(this_short_size / min(img_height, img_width),
+                             self.imgMaxSize / max(img_height, img_width))
             batch_widths[i] = img_width * this_scale
             batch_heights[i] = img_height * this_scale
 
@@ -191,14 +182,12 @@ class TrainDataset(BaseDataset):
         batch_width = int(self.round2nearest_multiple(batch_width, self.padding_constant))
         batch_height = int(self.round2nearest_multiple(batch_height, self.padding_constant))
 
-        assert self.padding_constant >= self.segm_downsampling_rate, \
-            'padding constant must be equal or larger than segm downsampling rate'
-        batch_images = torch.zeros(
-            self.batch_per_gpu, 3, batch_height, batch_width)
-        batch_segms = torch.zeros(
-            self.batch_per_gpu,
-            batch_height // self.segm_downsampling_rate,
-            batch_width // self.segm_downsampling_rate).long()
+        assert self.padding_constant >= self.segm_downsampling_rate, 'padding constant must be equal or larger than segm downsampling rate'
+        
+        batch_images = torch.zeros(self.batch_per_gpu, 3, batch_height, batch_width)
+        batch_segms = torch.zeros(self.batch_per_gpu,
+                                  batch_height // self.segm_downsampling_rate,
+                                  batch_width // self.segm_downsampling_rate).long()
 
         for i in range(self.batch_per_gpu):
             this_record = batch_records[i]
@@ -227,11 +216,10 @@ class TrainDataset(BaseDataset):
             segm_rounded_height = self.round2nearest_multiple(segm.size[1], self.segm_downsampling_rate)
             segm_rounded = Image.new('L', (segm_rounded_width, segm_rounded_height), 0)
             segm_rounded.paste(segm, (0, 0))
-            segm = imresize(
-                segm_rounded,
-                (segm_rounded.size[0] // self.segm_downsampling_rate, \
-                 segm_rounded.size[1] // self.segm_downsampling_rate), \
-                interp='nearest')
+            segm = imresize(segm_rounded,
+                            (segm_rounded.size[0] // self.segm_downsampling_rate, 
+                            segm_rounded.size[1] // self.segm_downsampling_rate),
+                            interp='nearest')
 
             # Image transform, to torch float tensor 3xHxW
             img = self.img_transform(img)
@@ -240,7 +228,7 @@ class TrainDataset(BaseDataset):
             segm = self.segm_transform(segm)
 
             # Check if training only wall, there is no need for additional labels, except 0 and 1 (where 0 represents wall and 1 represents other)
-            if self.train_only_wall:
+            if self.train_subsample_dataset:
                 segm[segm > 0] = 1
 
             # Put into batch arrays
@@ -250,7 +238,7 @@ class TrainDataset(BaseDataset):
         return {'img_data': batch_images, 'seg_label': batch_segms}
 
     def __len__(self):
-        return int(1e6)  # It's a fake length due to the trick that every loader maintains its own list
+        return int(1e8)  # It's a fake length due to the trick that every loader maintains its own list
    
 
 class ValDataset(BaseDataset):
@@ -261,14 +249,14 @@ class ValDataset(BaseDataset):
     def __init__(self, root_dataset, odgt, **kwargs):
         super(ValDataset, self).__init__(odgt, **kwargs)
         self.root_dataset = root_dataset
-        self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + 'ADEChallengeData2016/sceneCategories.txt', self.list_scenes)
-        # self.scene_dict, self.num_sample, _ = create_scene_dict(os.path.join("D:/Private_databases/ADE20K", 'ADEChallengeData2016/sceneCategories.txt'), self.list_scenes)
+        self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + SCENE_CATEGORIES, self.list_scenes)
         self.index = 0
         
     def __getitem__(self, index):        
         while True:   
             this_record = self.list_sample[self.index]
-            scene = self.scene_dict[this_record['fpath_img'][39:55]] # gets the scene of the particular image
+            this_record_name = this_record['fpath_img'].split(".")[0].split(os.path.sep)[-1]
+            scene = self.scene_dict[this_record_name] # gets the scene of the particular image
             self.index += 1
             if scene in self.list_scenes:
                 break
@@ -287,9 +275,8 @@ class ValDataset(BaseDataset):
         return {
             'img_data': img[None],
             'seg_label': segm,
-            'name': this_record['fpath_img'][39:55],
+            'name': this_record_name,
         }
-
 
     def __len__(self):
         return self.num_sample    
