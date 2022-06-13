@@ -97,6 +97,8 @@ has to be changed. Inside the config the following parameters have to be set:
 Also, if not using pretrained encoder and decoder, resnet pretrained model has to be downloaded into the [model_weights](./model_weights)
 directory (path to the pretrained model and all the needed details can be found [here](./model_weights/README.md))
 
+For changing other training hyperparameters, see inside the [constants.py](./utils/constants.py) script.
+
 ### Testing
 
 Wall segmentation models can be tested on arbitrary images using [testing.ipynb](./testing.ipynb) jupyter notebook.
