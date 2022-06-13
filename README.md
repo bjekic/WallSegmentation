@@ -18,7 +18,7 @@ architecture use dilated convolution with a smaller stride.
 of the decoder, used in this project is the PPM architecture.
 
 ## Structure of the project<br/>
- - Folder [Models](./models) consists of 3 separate .py files:
+ - Folder [models](./models) consists of 3 separate .py files:
    - [resnet.py](models/resnet.py) - where the ResNet architecture is defined.
    - [models.py](models/models.py) - where the whole PPM architecture
    for the decoder is defined, the ResNet dilated architecture for the encoder, as well as the class for the segmentation
@@ -29,11 +29,11 @@ of the decoder, used in this project is the PPM architecture.
    and small changes were made. The changes made to the original implementations of TrainDataset and ValDataset are for loading only
    images of interest (images that contain wall regions). Also, inside this folder, an additional function, for differentiating between the images of
    interest and other images, is implemented.
- - Folder [Model_weights](model_weights/README.md) - where weights of the trained models are stored,
+ - Folder [model_weights](model_weights/README.md) - where weights of the trained models are stored,
 due to the size of the models, the models can be found on [link](https://drive.google.com/drive/folders/1xh-MBuALwvNNFnLe-eofZU_wn8y3ZxJg?usp=sharing).
  - Folder [data](./data) - Important files used for loading the dataset are here. (The Database is not present in the directory due to size)
  - Folder [cktp](./ckpt/README.md) - where checkpoints during training of the models are saved.
- - Folder [Utils](./utils) - consists of:
+ - Folder [utils](./utils) - consists of:
    - [utils.py] - many helper functions used for training and testing wall segmentation models,
    - [constants.py] - all constants across the repository.
  - Folder [configs] - config used for training the models can be found here.
@@ -42,7 +42,7 @@ due to the size of the models, the models can be found on [link](https://drive.g
    - [eval.py](./src/eval.py) - code for the validation step during training as well as a function for segmenting a single
    image, are located here.
  - [train_script.py](./train_script.py) - the code used for training the wall segmentation model.
- - [Testing.ipynb](./testing.ipynb) - jupyter notebook which can be used for testing the wall segmentation
+ - [testing.ipynb](./testing.ipynb) - jupyter notebook which can be used for testing the wall segmentation
 model on any RGB image.
  
 ## Repository contribution<br/>
