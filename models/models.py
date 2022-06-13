@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from . import resnet 
 from functools import partial
-from Utils.constants import DEVICE, FC_DIM, NUM_CLASSES
+from utils.constants import DEVICE, FC_DIM, NUM_CLASSES
 
 
 class SegmentationModule(nn.Module):

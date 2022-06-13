@@ -50,15 +50,15 @@ class ResNet(nn.Module):
         super(ResNet, self).__init__()
         
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
-        self.bn1   = nn.BatchNorm2d(64)
+        self.bn1 = nn.BatchNorm2d(64)
         self.relu1 = nn.ReLU(inplace=True)
         
         self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2   = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(64)
         self.relu2 = nn.ReLU(inplace=True)
         
         self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn3   = nn.BatchNorm2d(128)
+        self.bn3 = nn.BatchNorm2d(128)
         self.relu3 = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
@@ -123,6 +123,5 @@ def resnet50(pretrained=False):
     
     # Loading pretrained resnet50
     if pretrained:
-        model.load_state_dict(torch.load('Model_weights/resnet50-imagenet.pth', map_location=lambda storage, loc: storage),
-                               strict=False)        
+        model.load_state_dict(torch.load('model_weights/resnet50-imagenet.pth', map_location=lambda storage, loc: storage), strict=False)
     return model

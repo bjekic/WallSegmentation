@@ -2,9 +2,9 @@ import os, json, torch
 from torchvision import transforms
 import numpy as np
 from PIL import Image
-from Utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, \
+from utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, \
                             LIST_SCENES, TRAIN_SUBSAMPLE_DATASET, SCENE_CATEGORIES, SEGM_DOWNSAMPLING_RATE
-from Utils.utils import imresize
+from utils.utils import imresize
 
 
 def create_scene_dict(path, list_scenes):

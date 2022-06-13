@@ -6,12 +6,12 @@ import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 
-from Models.models import SegmentationModule, build_encoder, build_decoder
-from Models.dataset import TrainDataset, ValDataset
-from Utils.constants import NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU, ODGT_EVALUTATION
+from models.models import SegmentationModule, build_encoder, build_decoder
+from models.dataset import TrainDataset, ValDataset
+from utils.constants import NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU, ODGT_EVALUTATION
 from src.train import create_optimizers, train_one_epoch, checkpoint
 from src.eval import validation_step
-from Utils.utils import not_None_collate
+from utils.utils import not_None_collate
 
 
 def main_train(ckpt_dir_path,
