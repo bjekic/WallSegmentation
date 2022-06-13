@@ -110,8 +110,9 @@ if __name__ == '__main__':
         config = json.load(f)
 
     ckpt_dir = os.path.join('ckpt', config["CHECKPOINT_DIR_PATH"])
-    main_train(ckpt_dir_path=ckpt_dir,
-               data_root_path=config["ROOT_DATASET"],
-               continue_training=config["CONTINUE_TRAINING"],
-               path_encoder_weights=config["MODEL_ENCODER_WEIGHTS_PATH"],
-               path_decoder_weights=config["MODEL_DECODER_WEIGHTS_PATH"])
+    data_root_path = config["ROOT_DATASET"]
+    continue_training = config["CONTINUE_TRAINING"]
+    path_encoder_weights = config.get("MODEL_ENCODER_WEIGHTS_PATH", "")
+    path_decoder_weights = config.get("MODEL_DECODER_WEIGHTS_PATH", "")
+
+    main_train(ckpt_dir, data_root_path, continue_training, path_encoder_weights, path_decoder_weights)
