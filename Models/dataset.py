@@ -13,16 +13,16 @@ def create_scene_dict(path, list_scenes):
     """
     dict_scene = {}
     
-    file = open(path,'r')
+    file = open(path, 'r')
     counter_val = 0
     counter_train = 0
     for line in file:
         temp = line.split(' ')
         scene = temp[1][:-1]
         dict_scene[temp[0]] = scene
-        if scene in list_scenes and temp.startswith('ADE_val'):
+        if scene in list_scenes and temp[0].startswith('ADE_val'):
             counter_val += 1
-        if scene in list_scenes and temp.startswith('ADE_train'):
+        if scene in list_scenes and temp[0].startswith('ADE_train'):
             counter_train += 1
     return dict_scene, counter_val, counter_train
 
@@ -256,8 +256,10 @@ class ValDataset(BaseDataset):
         while True:   
             this_record = self.list_sample[self.index]
             this_record_name = this_record['fpath_img'].split(".")[0].split(os.path.sep)[-1]
-            scene = self.scene_dict[this_record_name] # gets the scene of the particular image
+            scene = self.scene_dict[this_record_name]  # gets the scene of the particular image
             self.index += 1
+            if self.index >= self.num_sample:
+                self.index = 0
             if scene in self.list_scenes:
                 break
 

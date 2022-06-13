@@ -1,8 +1,6 @@
 import numpy as np
 import torch
 
-from Models.models import SegmentationModule
-
 
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
@@ -18,7 +16,7 @@ NUM_EPOCHS = 20
 TOTAL_NUM_ITER = NUM_ITER_PER_EPOCH * NUM_EPOCHS
 
 IMG_SIZES = (300, 375, 450, 525, 575)
-IMG_MAX_SIZE = 950
+IMG_MAX_SIZE = 900
 PADDING = 8
 SEGM_DOWNSAMPLING_RATE = 8
 LIST_SCENES = ['bathroom', 'bedroom', 'kitchen', 'living_room', 'art_gallery', 'art_studio', 'attic', 'auditorium',

@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-from IPython import display
 import PIL
 from PIL import Image
+
 
 def imresize(im, size, interp='bilinear'):
     """
@@ -61,6 +61,9 @@ def visualize_wall(img, pred):
     img_green[pred == 0] = [0, 255, 0]
     black_green[pred == 0] = [0, 255, 0]
     black_green[pred != 0] = [0, 0, 0]
-    
     im_vis = np.concatenate((img, black_green, img_green), axis=1)
-    display(PIL.Image.fromarray(im_vis))
+    PIL.Image.fromarray(im_vis).show()
+
+
+def not_None_collate(x):
+    return x

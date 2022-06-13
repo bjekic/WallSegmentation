@@ -1,14 +1,9 @@
 import os
 import torch
 import torch.nn as nn
-from Utils.constants import TOTAL_NUM_ITER, NUM_ITER_PER_EPOCH, NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU
+from Utils.constants import TOTAL_NUM_ITER, NUM_ITER_PER_EPOCH, OPTIMIZER_PARAMETERS, DEVICE
 from Utils.utils import pixel_acc
 from tqdm import tqdm
-import shutil
-from torch.utils.tensorboard import SummaryWriter
-from datetime import datetime
-from Models.models import SegmentationModule, build_encoder, build_decoder
-from Models.dataset import TrainDataset
 
 
 def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writer):
@@ -43,8 +38,8 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
             optimizer.step()
 
         # update average loss and acc
-        writer.add_scalar('Trainig loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
-        writer.add_scalar('Trainig accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Training loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Training accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
 
 
 def checkpoint(nets, epoch, checkpoint_dir_path, is_best_epoch): 

@@ -1,15 +1,16 @@
 import json
 import os
 import shutil
+import pickle
 import torch
 import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+
 from Models.models import SegmentationModule, build_encoder, build_decoder
 from Models.dataset import TrainDataset, ValDataset
 from Utils.constants import NUM_EPOCHS, OPTIMIZER_PARAMETERS, DEVICE, NUM_WORKERS, ODGT_TRAINING, BATCH_PER_GPU, ODGT_EVALUTATION
-from torch.utils.tensorboard import SummaryWriter
 from src.train import create_optimizers, train_one_epoch, checkpoint
 from src.eval import validation_step
-import pickle
 from Utils.utils import not_None_collate
 
 
@@ -21,8 +22,6 @@ def main_train(ckpt_dir_path,
     """
         Main function for training original encoder/decoder architecture for semantic segmentation of 150 classes,
         with an option to start from pretrained model, trained in last_epoch_trained
-        # TODO: change description
-        TODO: Change the name of this function, to be more clear what each of these train functions does
     """
     # Encoder/Decoder weights
     if continue_training:
@@ -49,10 +48,10 @@ def main_train(ckpt_dir_path,
     dataset_train = TrainDataset(data_root_path, ODGT_TRAINING, batch_per_gpu=BATCH_PER_GPU)
 
     loader_train = torch.utils.data.DataLoader(dataset_train,
-                                               batch_size=1, # TODO: write why it is one (because the batch is created in TrainDataset)
+                                               batch_size=1,  #batch is created in TrainDataset
                                                shuffle=False,
                                                collate_fn=not_None_collate,
-                                               num_workers=NUM_WORKERS, # TODO change to parameter from config.json/contants.py
+                                               num_workers=NUM_WORKERS,
                                                drop_last=True,
                                                pin_memory=True)
     
@@ -107,10 +106,11 @@ def main_train(ckpt_dir_path,
 
 if __name__ == '__main__':
 
-    with open('configs/config_desktop_everseen.json', 'r') as f:
+    with open('configs/config.json', 'r') as f:
         config = json.load(f)
 
-    main_train(ckpt_dir_path=config["CHECKPOINT_DIR_PATH"],
+    ckpt_dir = os.path.join('ckpt', config["CHECKPOINT_DIR_PATH"])
+    main_train(ckpt_dir_path=ckpt_dir,
                data_root_path=config["ROOT_DATASET"],
                continue_training=config["CONTINUE_TRAINING"],
                path_encoder_weights=config["MODEL_ENCODER_WEIGHTS_PATH"],
