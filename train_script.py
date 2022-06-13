@@ -85,7 +85,7 @@ def main_train(ckpt_dir_path,
         print(f'Training epoch {epoch + 1}/{NUM_EPOCHS}...')
         train_one_epoch(segmentation_module, iterator_train, optimizers, epoch + 1, crit, writer)
         
-        print(f'Starting evaluation after epoch {epoch}')
+        print(f'Starting evaluation after epoch {epoch + 1}')
         acc, IOU = validation_step(segmentation_module, loader_val, writer, epoch + 1)
         print('Evaluation Done!')
                 

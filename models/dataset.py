@@ -103,7 +103,7 @@ class TrainDataset(BaseDataset):
         self.cur_idx = 0
         self.if_shuffled = False
         
-        self.scene_dict, _ , num_ex_train = create_scene_dict(os.path.join(self.root_dataset, SCENE_CATEGORIES), self.list_scenes)
+        self.scene_dict, _, num_ex_train = create_scene_dict(os.path.join(self.root_dataset, SCENE_CATEGORIES), self.list_scenes)
         
         if self.train_subsample_dataset:
             print(f'Number of different images: {num_ex_train}')
@@ -113,7 +113,8 @@ class TrainDataset(BaseDataset):
     
     def _get_sub_batch(self):
         """
-            TODO: Add description
+        Used to group images with same type of aspect ratio into the same batch
+        :return: batch of images which all have either larger width or larger height
         """
         while True:
             # Get a sample record
@@ -129,14 +130,14 @@ class TrainDataset(BaseDataset):
             # If only a subpart of the database is used, check whether the current image has the appropriate scene. If not, continue while loop.
             if self.train_subsample_dataset:
                 this_sample_name = this_sample['fpath_img'].split(".")[0].split(os.path.sep)[-1]
-                scene = self.scene_dict[this_sample_name] # gets the scene of the particular image
+                scene = self.scene_dict[this_sample_name]  # gets the scene of the particular image
                 if scene not in self.list_scenes:
                     continue
 
             if this_sample['height'] > this_sample['width']:
-                self.batch_record_list[0].append(this_sample) # h > w, go to 1st class
+                self.batch_record_list[0].append(this_sample)  # h > w, go to 1st class
             else:
-                self.batch_record_list[1].append(this_sample) # h <= w, go to 2nd class
+                self.batch_record_list[1].append(this_sample)  # h <= w, go to 2nd class
 
             if len(self.batch_record_list[0]) == self.batch_per_gpu:
                 batch_records = self.batch_record_list[0]
@@ -150,6 +151,12 @@ class TrainDataset(BaseDataset):
         return batch_records
 
     def __getitem__(self, index):
+        """
+        Obtains batch used for training
+        :param index:
+        :return: a dictionary with 'img_data' containing batch of images, and 'seg_label' which are segmentation labels
+        for images in 'img_data'
+        """
         # NOTE: random shuffle for the first time. shuffle in __init__ is useless
         if not self.if_shuffled:
             np.random.seed(index)

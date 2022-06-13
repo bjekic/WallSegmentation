@@ -18,7 +18,7 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
         batch_data = next(iterator)[0]  #Because the batch size in the dataloader is 1, but the batch is created in TrainDataset
         segmentation_module.zero_grad() 
         
-        # adjust learning rate (learning rate "poly") #TODO change to learning rate scheduler
+        # adjust learning rate (learning rate "poly")  #TODO change to learning rate scheduler
         cur_iter = i + (epoch - 1) * NUM_ITER_PER_EPOCH
         lr_encoder, _ = adjust_learning_rate(optimizers, cur_iter)
                 

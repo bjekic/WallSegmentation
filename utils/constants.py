@@ -37,7 +37,6 @@ OPTIMIZER_PARAMETERS = {
 NUM_CLASSES = 2
 FC_DIM = 2048
 
-
 ODGT_TRAINING = "data/training.odgt"
 ODGT_EVALUTATION = "data/validation.odgt"
 
