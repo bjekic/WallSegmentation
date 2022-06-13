@@ -1,15 +1,15 @@
 {
-    "TRAIN_IMAGES_FOLDER_PATH": "D:/Private_databases/ADE20K/ADEChallengeData2016/images/training",
-    "VALIDATION_IMAGES_FOLDER_PATH": "D:/Private_databases/ADE20K/ADEChallengeData2016/images/validation",
-    "TRAIN_ANNOTATIONS_FOLDER_PATHS": "D:/Private_databases/ADE20K/ADEChallengeData2016/annotations/training",
-    "VALIDATION_ANNOTATIONS_FOLDER_PATHS": "D:/Private_databases/ADE20K/ADEChallengeData2016/annotations/validation",
-    "SCENE_CATEGORIES": "D:/Private_databases/ADE20K/ADEChallengeData2016/sceneCategories.txt",
-    "ROOT_DATASET": "D:/Private_databases/ADE20K",
+    "TRAIN_IMAGES_FOLDER_PATH": "ABS_PATH_TO ADEChallengeData2016/images/training",
+    "VALIDATION_IMAGES_FOLDER_PATH": "ABS_PATH_TO ADEChallengeData2016/images/validation",
+    "TRAIN_ANNOTATIONS_FOLDER_PATHS": "ABS_PATH_TO ADEChallengeData2016/annotations/training",
+    "VALIDATION_ANNOTATIONS_FOLDER_PATHS": "ABS_PATH_TO ADEChallengeData2016/annotations/validation",
+    "SCENE_CATEGORIES": "ABS_PATH_TO sceneCategories.txt",
+    "ROOT_DATASET": "PATH_TO_ADE20K_DATASET_DIRECTORY",
 
-    "MODEL_ENCODER_WEIGHTS_PATH": "Model_weights/wall_encoder_epoch_20.pth",
-    "MODEL_DECODER_WEIGHTS_PATH": "Model_weights/wall_decoder_epoch_20.pth",
+    "MODEL_ENCODER_WEIGHTS_PATH": "PATH_TO_ENCODER_WEIGHTS",
+    "MODEL_DECODER_WEIGHTS_PATH": "PATH_TO_DECODER_WEIGHTS",
 
     "CONTINUE_TRAINING": false,
-    "CHECKPOINT_DIR_PATH": "ckpt/training_test_1"
+    "CHECKPOINT_DIR_PATH": "TRAINING_NAME"
     
 }
