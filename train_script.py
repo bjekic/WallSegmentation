@@ -48,7 +48,7 @@ def main_train(ckpt_dir_path,
     dataset_train = TrainDataset(data_root_path, ODGT_TRAINING, batch_per_gpu=BATCH_PER_GPU)
 
     loader_train = torch.utils.data.DataLoader(dataset_train,
-                                               batch_size=1,  #batch is created in TrainDataset
+                                               batch_size=1,  # batch is created in TrainDataset
                                                shuffle=False,
                                                collate_fn=not_None_collate,
                                                num_workers=NUM_WORKERS,

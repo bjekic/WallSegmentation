@@ -88,7 +88,8 @@ In this section, the following will be explained:
 
 For training the wall segmentation model, script `train_script.py` is used. To run the training, [config](./configs/config.json)
 has to be changed. Inside the config the following parameters have to be set:
-- `ROOT_DATASET` - absolute path the to downloaded ADE20K dataset,
+- `ROOT_DATASET` - absolute path the to directory where the downloaded ADE20K dataset is located (without
+`ADEChallengeData2016` at the end of the path),
 - `CONTINUE_TRAINING` - if `True`, continue interrupted training,
 - `CHECKPOINT_DIR_PATH` - name of the directory inside ckpt inside which the model and tensorboard will be saved,
 - `MODEL_ENCODER_WEIGHTS_PATH` - if present, represents the pretrained encoder model (optional parameter),

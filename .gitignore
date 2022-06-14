@@ -5,3 +5,5 @@ __pycache__
 configs/*
 !configs/config.json
 .ipynb_checkpoints
+ckpt/*
+!ckpt/README.md

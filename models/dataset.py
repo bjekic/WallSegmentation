@@ -1,10 +1,20 @@
-import os, json, torch
+import os
+import json
+import torch
 from torchvision import transforms
 import numpy as np
 from PIL import Image
-from utils.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_SIZES, IMG_MAX_SIZE, PADDING, \
-                            LIST_SCENES, TRAIN_SUBSAMPLE_DATASET, SCENE_CATEGORIES, SEGM_DOWNSAMPLING_RATE
+
 from utils.utils import imresize
+from utils.constants import IMAGENET_MEAN, \
+                            IMAGENET_STD, \
+                            IMG_SIZES, \
+                            IMG_MAX_SIZE, \
+                            PADDING, \
+                            LIST_SCENES, \
+                            TRAIN_SUBSAMPLE_DATASET, \
+                            SCENE_CATEGORIES, \
+                            SEGM_DOWNSAMPLING_RATE
 
 
 def create_scene_dict(path, list_scenes):
@@ -39,14 +49,11 @@ class BaseDataset(torch.utils.data.Dataset):
         self.list_scenes = LIST_SCENES
 
         # parse the input list
-        self.parse_input_list(odgt, **kwargs)
+        self.parse_input_list(odgt)
 
         # mean and std
-        self.normalize = transforms.Normalize(
-            mean=IMAGENET_MEAN,
-            std=IMAGENET_STD) 
-        
-        
+        self.normalize = transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD)
+
     def parse_input_list(self, odgt):
         """
             Function for parsing input list
@@ -55,7 +62,6 @@ class BaseDataset(torch.utils.data.Dataset):
             self.list_sample = odgt
         elif isinstance(odgt, str):
             self.list_sample = [json.loads(x.rstrip()) for x in open(odgt, 'r')]
-
 
     def img_transform(self, img):
         """
@@ -69,7 +75,7 @@ class BaseDataset(torch.utils.data.Dataset):
 
     def segm_transform(self, segm):
         """
-            Function for transorming segmentation mask from numpy array to tensor with values in the range [-1, 149]
+            Function for transforming segmentation mask from numpy array to tensor with values in the range [-1, 149]
         """
         segm = torch.from_numpy(np.array(segm)).long() - 1
         return segm
@@ -88,7 +94,7 @@ class TrainDataset(BaseDataset):
     def __init__(self, root_dataset, odgt, batch_per_gpu=1, **kwargs):
         super(TrainDataset, self).__init__(odgt, **kwargs)
         
-        self.train_subsample_dataset = TRAIN_SUBSAMPLE_DATASET # flag that indicates whether the whole database is used or only a part
+        self.train_subsample_dataset = TRAIN_SUBSAMPLE_DATASET  # flag that indicates whether the whole database is used or only a part
         self.root_dataset = root_dataset
         self.num_sample = len(self.list_sample)
         
@@ -109,8 +115,7 @@ class TrainDataset(BaseDataset):
             print(f'Number of different images: {num_ex_train}')
         else:
             print(f'Number of different images: {self.num_sample}')
-            
-    
+
     def _get_sub_batch(self):
         """
         Used to group images with same type of aspect ratio into the same batch
@@ -225,7 +230,7 @@ class TrainDataset(BaseDataset):
             segm_rounded.paste(segm, (0, 0))
             segm = imresize(segm_rounded,
                             (segm_rounded.size[0] // self.segm_downsampling_rate, 
-                            segm_rounded.size[1] // self.segm_downsampling_rate),
+                             segm_rounded.size[1] // self.segm_downsampling_rate),
                             interp='nearest')
 
             # Image transform, to torch float tensor 3xHxW
@@ -256,7 +261,7 @@ class ValDataset(BaseDataset):
     def __init__(self, root_dataset, odgt, **kwargs):
         super(ValDataset, self).__init__(odgt, **kwargs)
         self.root_dataset = root_dataset
-        self.scene_dict, self.num_sample, _ = create_scene_dict(self.root_dataset + SCENE_CATEGORIES, self.list_scenes)
+        self.scene_dict, self.num_sample, _ = create_scene_dict(os.path.join(self.root_dataset, SCENE_CATEGORIES), self.list_scenes)
         self.index = 0
         
     def __getitem__(self, index):        
@@ -289,7 +294,3 @@ class ValDataset(BaseDataset):
 
     def __len__(self):
         return self.num_sample    
-
-        
-        
-        

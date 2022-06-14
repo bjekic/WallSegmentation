@@ -15,12 +15,12 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
 
     for i in tqdm(range(NUM_ITER_PER_EPOCH)):
         # load a batch of data
-        batch_data = next(iterator)[0]  #Because the batch size in the dataloader is 1, but the batch is created in TrainDataset
+        batch_data = next(iterator)[0]  # Because the batch size in the dataloader is 1, but the batch is created in TrainDataset
         segmentation_module.zero_grad() 
         
         # adjust learning rate (learning rate "poly")  #TODO change to learning rate scheduler
-        cur_iter = i + (epoch - 1) * NUM_ITER_PER_EPOCH
-        lr_encoder, _ = adjust_learning_rate(optimizers, cur_iter)
+        curr_iter = i + (epoch - 1) * NUM_ITER_PER_EPOCH
+        lr_encoder, _ = adjust_learning_rate(optimizers, curr_iter)
                 
         # forward pass
         pred = segmentation_module(batch_data)
@@ -38,7 +38,7 @@ def train_one_epoch(segmentation_module, iterator, optimizers, epoch, crit, writ
             optimizer.step()
 
         # update average loss and acc
-        writer.add_scalar('Learningn rate', lr_encoder, (epoch - 1) * NUM_ITER_PER_EPOCH + i)
+        writer.add_scalar('Learning rate', lr_encoder, (epoch - 1) * NUM_ITER_PER_EPOCH + i)
         writer.add_scalar('Training loss', loss.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
         writer.add_scalar('Training accuracy', acc.data.item(), (epoch - 1) * NUM_ITER_PER_EPOCH + i)
 
@@ -56,11 +56,11 @@ def checkpoint(nets, epoch, checkpoint_dir_path, is_best_epoch):
     torch.save(dict_encoder, os.path.join(checkpoint_dir_path, f'encoder_epoch_{epoch}.pth'))
     torch.save(dict_decoder, os.path.join(checkpoint_dir_path, f'decoder_epoch_{epoch}.pth'))
     
-    previous_encoder_epoch = os.path.join(checkpoint_dir_path, f'encoder_epoch_{epoch-1}.pth')
+    previous_encoder_epoch = os.path.join(checkpoint_dir_path, f'encoder_epoch_{epoch - 1}.pth')
     if os.path.exists(previous_encoder_epoch):
         os.remove(previous_encoder_epoch)
         
-    previous_decoder_epoch = os.path.join(checkpoint_dir_path, f'decoder_epoch_{epoch-1}.pth')
+    previous_decoder_epoch = os.path.join(checkpoint_dir_path, f'decoder_epoch_{epoch - 1}.pth')
     if os.path.exists(previous_decoder_epoch):
         os.remove(previous_decoder_epoch)
     
@@ -70,7 +70,6 @@ def checkpoint(nets, epoch, checkpoint_dir_path, is_best_epoch):
             os.remove(model_path)
         torch.save(dict_encoder, os.path.join(checkpoint_dir_path, f'best_encoder_epoch_{epoch}.pth'))
         torch.save(dict_decoder, os.path.join(checkpoint_dir_path, f'best_decoder_epoch_{epoch}.pth'))
-        
 
 
 def group_weight(module):
@@ -117,11 +116,11 @@ def create_optimizers(nets, optim_parameters):
     return optimizer_encoder, optimizer_decoder
 
 
-def adjust_learning_rate(optimizers, cur_iter):
+def adjust_learning_rate(optimizers, curr_iter):
     """
         Adjusting learning rate in each iteration
     """
-    scale_running_lr = ((1 - cur_iter/TOTAL_NUM_ITER) ** 0.9)
+    scale_running_lr = ((1 - curr_iter/TOTAL_NUM_ITER) ** 0.9)
     start_lr = OPTIMIZER_PARAMETERS["LEARNING_RATE"]
 
     lr_encoder = start_lr * scale_running_lr

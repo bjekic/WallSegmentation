@@ -24,10 +24,10 @@ def validation_step(segmentation_module, loader, writer, epoch):
         batch_data = batch_data[0]
 
         seg_label = np.array(batch_data['seg_label'])
-        segSize = (seg_label.shape[0], seg_label.shape[1])
+        seg_size = (seg_label.shape[0], seg_label.shape[1])
 
         with torch.no_grad():
-            scores = segmentation_module(batch_data, segSize=segSize)
+            scores = segmentation_module(batch_data, seg_size=seg_size)
 
         _, pred = torch.max(scores, dim=1)
         pred = pred.cpu()[0].numpy()
@@ -63,10 +63,10 @@ def segment_image(segmentation_module, img, disp_image=True):
     img_original = np.array(img)
     img_data = pil_to_tensor(img)
     singleton_batch = {'img_data': img_data[None].to(DEVICE)}
-    segSize = img_original.shape[:2]
+    seg_size = img_original.shape[:2]
 
     with torch.no_grad():
-        scores = segmentation_module(singleton_batch, segSize=segSize)
+        scores = segmentation_module(singleton_batch, seg_size=seg_size)
 
     _, pred = torch.max(scores, dim=1)
     pred = pred.cpu()[0].numpy()
