@@ -51,16 +51,16 @@ def IOU(pred, labels):
     return intersection / union
 
 
-def visualize_wall(img, pred):
+def visualize_wall(img, pred, class_to_display=0):
     """
         Function for visualizing wall prediction 
         (original image, segmentation mask and original image with the segmented wall)
     """
     img_green = img.copy()
     black_green = img.copy()
-    img_green[pred == 0] = [0, 255, 0]
-    black_green[pred == 0] = [0, 255, 0]
-    black_green[pred != 0] = [0, 0, 0]
+    img_green[pred == class_to_display] = [0, 255, 0]
+    black_green[pred == class_to_display] = [0, 255, 0]
+    black_green[pred != class_to_display] = [0, 0, 0]
     im_vis = np.concatenate((img, black_green, img_green), axis=1)
     PIL.Image.fromarray(im_vis).show()
 
