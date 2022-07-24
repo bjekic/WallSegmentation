@@ -64,10 +64,10 @@ module was trained from start on the images of interest.
 
 Mean values of pixel accuracy and IoU on validation subset (only on images of interest) are given in the table.
 
-|                  |  First approach  | Second approach  |  Third approach  |
-|:----------------:|:----------------:|:----------------:|:----------------:|
-|Pixel accuracy [%]|      84.82       |      86.24       |      90.39       |
-|IoU [%]           |      56.87       |      59.08       |      68.79       |
+|                  |  First approach  | Second approach  | Third approach |
+|:----------------:|:----------------:|:----------------:|:--------------:|
+|Pixel accuracy [%]|      84.82       |      86.24       |     90.75      |
+|IoU [%]           |      56.87       |      59.08       |     69.05      |
 
 First approach: <br/> 
 ![Result obtained using first approach](./readme_supplementary/First_approach.png)<br/> <br/> 
