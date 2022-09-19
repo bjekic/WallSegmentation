@@ -1,6 +1,10 @@
 # Wall Segmentation
 
-Implementation of a wall segmentation algorithm in PyTorch. Implementation is based on the [paper](https://arxiv.org/abs/1612.01105).<br/> 
+Implementation of a wall segmentation algorithm in PyTorch.
+
+Accompanying paper: [Getting Started with Wall Segmentation](https://www.researchgate.net/publication/363059238_Getting_Started_with_Wall_Segmentation).
+
+Implementation is based on the paper: [Pyramid Scene Parsing Network](https://arxiv.org/abs/1612.01105).
 
 The used database is [MIT ADE20K Scene parsing dataset](http://sceneparsing.csail.mit.edu/), where 150 different categories are labeled.
 An example of an image from the database:<br/> 
