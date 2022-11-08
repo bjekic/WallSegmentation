@@ -125,3 +125,13 @@ def resnet50(pretrained=False):
     if pretrained:
         model.load_state_dict(torch.load('model_weights/resnet50-imagenet.pth', map_location=lambda storage, loc: storage), strict=False)
     return model
+
+
+def resnet101(pretrained=False, **kwargs):
+    """
+        Function for instantiating resnet101 with specific number of layers and load pretrained network if needed
+    """
+    model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
+    if pretrained:
+        model.load_state_dict(torch.load('model_weights/resnet101-imagenet.pth', map_location=lambda storage, loc: storage), strict=False)
+    return model

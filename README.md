@@ -40,7 +40,7 @@ due to the size of the models, the models can be found on [link](https://drive.g
  - Folder [utils](./utils) - consists of:
    - [utils.py] - many helper functions used for training and testing wall segmentation models,
    - [constants.py] - all constants across the repository.
- - Folder [configs] - config used for training the models can be found here.
+ - Folder [configs](./configs) - config used for training the models can be found here.
  - Folder [src](./src) - where code used for training ad evaluating is located. Consists of:
    - [train.py](./src/train.py) - code used for training a single epoch is located here;
    - [eval.py](./src/eval.py) - code for the validation step during training as well as a function for segmenting a single
