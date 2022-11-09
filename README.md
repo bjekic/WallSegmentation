@@ -96,6 +96,8 @@ has to be changed. Inside the config the following parameters have to be set:
 `ADEChallengeData2016` at the end of the path),
 - `CONTINUE_TRAINING` - if `True`, continue interrupted training,
 - `CHECKPOINT_DIR_PATH` - name of the directory inside ckpt inside which the model and tensorboard will be saved,
+- `ENCODER_MODEL` - model used for the encoder, can be one of the following: `resnet18`, `resnet18-dilated`,
+`resnet50`, `resnet50-dilated`, `resnet101`, `resnet101-dilated`
 - `MODEL_ENCODER_WEIGHTS_PATH` - if present, represents the pretrained encoder model (optional parameter),
 - `MODEL_DECODER_WEIGHTS_PATH` - if present, represents the pretrained decoder model (optional parameter).
 

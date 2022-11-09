@@ -3,7 +3,9 @@
 Inside this folder models for the trained models are stored. Due to the size of the models, the models can be found
 on [link](https://drive.google.com/drive/folders/1xh-MBuALwvNNFnLe-eofZU_wn8y3ZxJg?usp=sharing):
 
+ - resnet18-imagenet.pth - A pretrained model of the ResNet-18 architecture. Pretrained on ImageNet database,
  - resnet50-imagenet.pth - A pretrained model of the ResNet-50 architecture. Pretrained on ImageNet database,
+ - resnet101-imagenet.pth - A pretrained model of the ResNet-101 architecture. Pretrained on ImageNet database,
 
  - Weights for the segmentation module trained for semantic segmentation of 150 different classes found in the 
 ADE20K database (directory: Pretrained model on 150 classes):
