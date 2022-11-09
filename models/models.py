@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.resnet import resnet50, resnet101
+from models.resnet import resnet18, resnet50, resnet101
 from functools import partial
 from utils.constants import DEVICE, FC_DIM, NUM_CLASSES
 
@@ -28,7 +28,9 @@ def build_encoder(path_encoder_weights="", encoder_model="resnet50-dilated"):
     """
     print(f'Building encoder: {encoder_model}')
     pretrained = path_encoder_weights != ""
-    if encoder_model.startswith("resnet50"):
+    if encoder_model.startswith("resnet18"):
+        orig_resnet = resnet18(pretrained=not pretrained)
+    elif encoder_model.startswith("resnet50"):
         orig_resnet = resnet50(pretrained=not pretrained)
     elif encoder_model.startswith("resnet101"):
         orig_resnet = resnet101(pretrained=not pretrained)
@@ -38,7 +40,7 @@ def build_encoder(path_encoder_weights="", encoder_model="resnet50-dilated"):
     if encoder_model.endswith("dilated"):
         net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
     else:
-        net_encoder = Resnet(orig_resnet)
+        net_encoder = ResnetDilated(orig_resnet, dilate_scale=1)
 
     if pretrained:
         print('Loading weights for net_encoder')
@@ -76,42 +78,6 @@ def weights_init(m):
     elif classname.find('BatchNorm') != -1:
         m.weight.data.fill_(1.)
         m.bias.data.fill_(1e-4)
-
-
-class Resnet(nn.Module):
-    def __init__(self, orig_resnet):
-        super(Resnet, self).__init__()
-
-        # take pretrained resnet, except AvgPool and FC
-        self.conv1 = orig_resnet.conv1
-        self.bn1 = orig_resnet.bn1
-        self.relu1 = orig_resnet.relu1
-
-        self.conv2 = orig_resnet.conv2
-        self.bn2 = orig_resnet.bn2
-        self.relu2 = orig_resnet.relu2
-
-        self.conv3 = orig_resnet.conv3
-        self.bn3 = orig_resnet.bn3
-        self.relu3 = orig_resnet.relu3
-
-        self.maxpool = orig_resnet.maxpool
-
-        self.layer1 = orig_resnet.layer1
-        self.layer2 = orig_resnet.layer2
-        self.layer3 = orig_resnet.layer3
-        self.layer4 = orig_resnet.layer4
-
-    def forward(self, x):
-        """
-            Forward pass of the ResNet architecture
-        """
-        x = nn.Sequential(self.conv1, self.bn1, self.relu1,
-                          self.conv2, self.bn2, self.relu2,
-                          self.conv3, self.bn3, self.relu3,
-                          self.maxpool,
-                          self.layer1, self.layer2, self.layer3, self.layer4)(x)
-        return x
 
 
 class ResnetDilated(nn.Module):
