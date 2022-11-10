@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
-from models.resnet import resnet18, resnet50, resnet101
 from functools import partial
+from torchvision.models import resnet152
+
+from models.resnet import resnet18, resnet50, resnet101
 from utils.constants import DEVICE, FC_DIM, NUM_CLASSES
 
 
@@ -34,13 +36,21 @@ def build_encoder(path_encoder_weights="", encoder_model="resnet50-dilated"):
         orig_resnet = resnet50(pretrained=not pretrained)
     elif encoder_model.startswith("resnet101"):
         orig_resnet = resnet101(pretrained=not pretrained)
+    elif encoder_model.startswith("resnet152"):
+        orig_resnet = resnet152(pretrained=True)
     else:
         assert(f"Encoder model {encoder_model} is not implemented!")
 
-    if encoder_model.endswith("dilated"):
-        net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
+    if encoder_model.startswith("resnet152"):
+        if encoder_model.endswith("dilated"):
+            net_encoder = ResnetDilated_152(orig_resnet, dilate_scale=8)
+        else:
+            net_encoder = ResnetDilated_152(orig_resnet, dilate_scale=1)
     else:
-        net_encoder = ResnetDilated(orig_resnet, dilate_scale=1)
+        if encoder_model.endswith("dilated"):
+            net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
+        else:
+            net_encoder = ResnetDilated(orig_resnet, dilate_scale=1)
 
     if pretrained:
         print('Loading weights for net_encoder')
@@ -79,6 +89,37 @@ def weights_init(m):
         m.weight.data.fill_(1.)
         m.bias.data.fill_(1e-4)
 
+
+class ResnetDilated_152(nn.Module):
+
+    def __init__(self, orig_resnet, dilate_scale=8):
+        super(ResnetDilated_152, self).__init__()
+
+        if dilate_scale == 8:
+            orig_resnet.layer3.apply(partial(self._nostride_dilate, dilate=2))
+            orig_resnet.layer4.apply(partial(self._nostride_dilate, dilate=4))
+
+        self.model = nn.Sequential(*list(orig_resnet.children())[:-2])
+
+    def _nostride_dilate(self, m, dilate):
+        """
+            Function for dilation of ResNet
+        """
+        classname = m.__class__.__name__
+        if classname.find('Conv') != -1:
+            # convolution with stride
+            if m.stride == (2, 2):
+                m.stride = (1, 1)
+                if m.kernel_size == (3, 3):
+                    m.dilation = (dilate // 2, dilate // 2)
+                    m.padding = (dilate // 2, dilate // 2)
+            elif m.kernel_size == (3, 3):  # other convolutions
+                m.dilation = (dilate, dilate)
+                m.padding = (dilate, dilate)
+
+    def forward(self, x):
+
+        return self.model(x)
 
 class ResnetDilated(nn.Module):
     """
