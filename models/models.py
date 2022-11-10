@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 from functools import partial
-from torchvision.models import resnet152
+from torchvision.models import resnet18, resnet50, resnet101, resnet152
 
-from models.resnet import resnet18, resnet50, resnet101
+# from models.resnet import resnet18, resnet50, resnet101
 from utils.constants import DEVICE, FC_DIM, NUM_CLASSES
 
 
@@ -37,20 +37,14 @@ def build_encoder(path_encoder_weights="", encoder_model="resnet50-dilated"):
     elif encoder_model.startswith("resnet101"):
         orig_resnet = resnet101(pretrained=not pretrained)
     elif encoder_model.startswith("resnet152"):
-        orig_resnet = resnet152(pretrained=True)
+        orig_resnet = resnet152(pretrained=not pretrained)
     else:
         assert(f"Encoder model {encoder_model} is not implemented!")
 
-    if encoder_model.startswith("resnet152"):
-        if encoder_model.endswith("dilated"):
-            net_encoder = ResnetDilated_152(orig_resnet, dilate_scale=8)
-        else:
-            net_encoder = ResnetDilated_152(orig_resnet, dilate_scale=1)
+    if encoder_model.endswith("dilated"):
+        net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
     else:
-        if encoder_model.endswith("dilated"):
-            net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
-        else:
-            net_encoder = ResnetDilated(orig_resnet, dilate_scale=1)
+        net_encoder = ResnetDilated(orig_resnet)
 
     if pretrained:
         print('Loading weights for net_encoder')
@@ -90,10 +84,12 @@ def weights_init(m):
         m.bias.data.fill_(1e-4)
 
 
-class ResnetDilated_152(nn.Module):
-
-    def __init__(self, orig_resnet, dilate_scale=8):
-        super(ResnetDilated_152, self).__init__()
+class ResnetDilated(nn.Module):
+    """
+        Dilated ResNet class, created by dilating original ResNet architecture
+    """
+    def __init__(self, orig_resnet, dilate_scale=1):
+        super(ResnetDilated, self).__init__()
 
         if dilate_scale == 8:
             orig_resnet.layer3.apply(partial(self._nostride_dilate, dilate=2))
@@ -118,66 +114,10 @@ class ResnetDilated_152(nn.Module):
                 m.padding = (dilate, dilate)
 
     def forward(self, x):
-
-        return self.model(x)
-
-class ResnetDilated(nn.Module):
-    """
-        Dilated ResNet class, created by dilating original ResNet architecture
-    """
-    def __init__(self, orig_resnet, dilate_scale=8):
-        super(ResnetDilated, self).__init__()
-
-        if dilate_scale == 8:
-            orig_resnet.layer3.apply(partial(self._nostride_dilate, dilate=2))
-            orig_resnet.layer4.apply(partial(self._nostride_dilate, dilate=4))
-
-        # take pretrained ResNet, except AvgPool and FC
-        self.conv1 = orig_resnet.conv1
-        self.bn1 = orig_resnet.bn1
-        self.relu1 = orig_resnet.relu1
-        
-        self.conv2 = orig_resnet.conv2
-        self.bn2 = orig_resnet.bn2
-        self.relu2 = orig_resnet.relu2
-        
-        self.conv3 = orig_resnet.conv3
-        self.bn3 = orig_resnet.bn3
-        self.relu3 = orig_resnet.relu3
-        
-        self.maxpool = orig_resnet.maxpool
-        
-        self.layer1 = orig_resnet.layer1
-        self.layer2 = orig_resnet.layer2
-        self.layer3 = orig_resnet.layer3
-        self.layer4 = orig_resnet.layer4
-    
-    def _nostride_dilate(self, m, dilate):
-        """
-            Function for dilation of ResNet
-        """
-        classname = m.__class__.__name__
-        if classname.find('Conv') != -1:
-            # convolution with stride
-            if m.stride == (2, 2):
-                m.stride = (1, 1)
-                if m.kernel_size == (3, 3):
-                    m.dilation = (dilate//2, dilate//2)
-                    m.padding = (dilate//2, dilate//2)
-            elif m.kernel_size == (3, 3):  # other convolutions
-                m.dilation = (dilate, dilate)
-                m.padding = (dilate, dilate)
-    
-    def forward(self, x):
         """
             Forward pass of the Dilated ResNet architecture
-        """    
-        x = nn.Sequential(self.conv1, self.bn1, self.relu1,
-                          self.conv2, self.bn2, self.relu2,
-                          self.conv3, self.bn3, self.relu3,
-                          self.maxpool,
-                          self.layer1, self.layer2, self.layer3, self.layer4)(x)
-        return x
+        """
+        return self.model(x)
 
 
 class PPM(nn.Module):
