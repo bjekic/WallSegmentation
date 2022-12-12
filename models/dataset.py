@@ -134,7 +134,7 @@ class TrainDataset(BaseDataset):
 
             # If only a subpart of the database is used, check whether the current image has the appropriate scene. If not, continue while loop.
             if self.train_subsample_dataset:
-                this_sample_name = this_sample['fpath_img'].split(".")[0].split(os.path.sep)[-1]
+                this_sample_name = this_sample['fpath_img'].split(".")[0].split("/")[-1]
                 scene = self.scene_dict[this_sample_name]  # gets the scene of the particular image
                 if scene not in self.list_scenes:
                     continue
@@ -267,7 +267,7 @@ class ValDataset(BaseDataset):
     def __getitem__(self, index):        
         while True:   
             this_record = self.list_sample[self.index]
-            this_record_name = this_record['fpath_img'].split(".")[0].split(os.path.sep)[-1]
+            this_record_name = this_record['fpath_img'].split(".")[0].split("/")[-1]
             scene = self.scene_dict[this_record_name]  # gets the scene of the particular image
             self.index += 1
             if self.index >= self.num_sample:

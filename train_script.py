@@ -17,6 +17,7 @@ from utils.utils import not_None_collate
 def main_train(ckpt_dir_path,
                data_root_path,
                continue_training=False,
+               encoder_model="resnet50-dilated",
                path_encoder_weights="",
                path_decoder_weights=""):
     """
@@ -35,7 +36,7 @@ def main_train(ckpt_dir_path,
             shutil.rmtree(ckpt_dir_path)
         os.mkdir(ckpt_dir_path)
 
-    net_encoder = build_encoder(path_encoder_weights)
+    net_encoder = build_encoder(path_encoder_weights, encoder_model)
     net_decoder = build_decoder(path_decoder_weights)
 
     # Creating criterion. In the dataset there are labels -1 which stand for "don't care", so should be ommited during training.
@@ -115,4 +116,5 @@ if __name__ == '__main__':
     path_encoder_weights = config.get("MODEL_ENCODER_WEIGHTS_PATH", "")
     path_decoder_weights = config.get("MODEL_DECODER_WEIGHTS_PATH", "")
 
-    main_train(ckpt_dir, data_root_path, continue_training, path_encoder_weights, path_decoder_weights)
+    encoder_model = config.get("ENCODER_MODEL", "resnet50-dilated")
+    main_train(ckpt_dir, data_root_path, continue_training, encoder_model, path_encoder_weights, path_decoder_weights)

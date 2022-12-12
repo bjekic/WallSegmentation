@@ -40,7 +40,7 @@ due to the size of the models, the models can be found on [link](https://drive.g
  - Folder [utils](./utils) - consists of:
    - [utils.py] - many helper functions used for training and testing wall segmentation models,
    - [constants.py] - all constants across the repository.
- - Folder [configs] - config used for training the models can be found here.
+ - Folder [configs](./configs) - config used for training the models can be found here.
  - Folder [src](./src) - where code used for training ad evaluating is located. Consists of:
    - [train.py](./src/train.py) - code used for training a single epoch is located here;
    - [eval.py](./src/eval.py) - code for the validation step during training as well as a function for segmenting a single
@@ -63,6 +63,9 @@ on images of interest, but, instead, the entire decoder is trained on images of 
 - The third approach did not include transfer learning as described in previous two cases. Instead, the segmentation 
 module was trained from start on the images of interest.
 
+Beside the three described approaches, another 2 models were trained using different backbones, dilated ResNet-18 and 
+dilated ResNet-50. Both of these models were trained end2end on images of interest, without transfer learning. 
+
 
 ### Results of different approaches<br/>
 
@@ -82,6 +85,13 @@ Third approach:<br/>
 [From left to right: Test image, Segmentation mask, Predicted result]
 
 
+### Results with different backbones
+
+The three different backbones yielded different results on the validation set. The worst model was the
+model with the ResNet-18 backbone (Acc: 89.99% | IoU: 67.38%). This was expected as this backbone is the simplest of 
+the 3 compared models. Better results are obtained using the ResNet-50 backbone (Acc: 90.75% | IoU 69.05), while the 
+best results are obtained using the ResNet-101 backbone (Acc: 92.13% | IoU: 72.58%).
+
 ## Quick start
 
 In this section, the following will be explained:
@@ -96,6 +106,8 @@ has to be changed. Inside the config the following parameters have to be set:
 `ADEChallengeData2016` at the end of the path),
 - `CONTINUE_TRAINING` - if `True`, continue interrupted training,
 - `CHECKPOINT_DIR_PATH` - name of the directory inside ckpt inside which the model and tensorboard will be saved,
+- `ENCODER_MODEL` - model used for the encoder, can be one of the following: `resnet18`, `resnet18-dilated`,
+`resnet50`, `resnet50-dilated`, `resnet101`, `resnet101-dilated`*
 - `MODEL_ENCODER_WEIGHTS_PATH` - if present, represents the pretrained encoder model (optional parameter),
 - `MODEL_DECODER_WEIGHTS_PATH` - if present, represents the pretrained decoder model (optional parameter).
 
@@ -103,6 +115,13 @@ Also, if not using pretrained encoder and decoder, resnet pretrained model has t
 directory (path to the pretrained model and all the needed details can be found [here](./model_weights/README.md))
 
 For changing other training hyperparameters, see inside the [constants.py](./utils/constants.py) script.
+
+*note: when training different models, following hyperparameters may need to be changed in the 
+[constants.py](./utils/constants.py) script:
+ - `PADDING` and `SEGM_DOWNSAMPLING_RATE` - when training with dilated backbones, these parameter have to be 8, and 
+when using non-dilated backbones these have to be 32;
+ - `FC_DIM` - when training with ResNEt-18 backbones, this parameter has to be 512, while for ResNet-50 and ResNet-101,
+this parameter has to be 2048.
 
 ### Testing
 

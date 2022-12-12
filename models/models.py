@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.resnet import resnet50
+from models.resnet import resnet18, resnet50, resnet101
 from functools import partial
 from utils.constants import DEVICE, FC_DIM, NUM_CLASSES
 
@@ -18,17 +18,29 @@ class SegmentationModule(nn.Module):
         """
         Forward pass of Segmentation Module
         """
-    
+
         return self.decoder(self.encoder(input_dict['img_data'].to(DEVICE)), seg_size=seg_size)
 
    
-def build_encoder(path_encoder_weights=""):
+def build_encoder(path_encoder_weights="", encoder_model="resnet50-dilated"):
     """
         Function for building the encoder part of the Segmentation Module
     """
+    print(f'Building encoder: {encoder_model}')
     pretrained = path_encoder_weights != ""
-    orig_resnet = resnet50(pretrained=not pretrained)
-    net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
+    if encoder_model.startswith("resnet18"):
+        orig_resnet = resnet18(pretrained=not pretrained)
+    elif encoder_model.startswith("resnet50"):
+        orig_resnet = resnet50(pretrained=not pretrained)
+    elif encoder_model.startswith("resnet101"):
+        orig_resnet = resnet101(pretrained=not pretrained)
+    else:
+        assert(f"Encoder model {encoder_model} is not implemented!")
+
+    if encoder_model.endswith("dilated"):
+        net_encoder = ResnetDilated(orig_resnet, dilate_scale=8)
+    else:
+        net_encoder = ResnetDilated(orig_resnet, dilate_scale=1)
 
     if pretrained:
         print('Loading weights for net_encoder')
@@ -172,5 +184,5 @@ class PPM(nn.Module):
             x = nn.functional.softmax(x, dim=1)
         else:        
             x = nn.functional.log_softmax(x, dim=1)
-        
+
         return x
