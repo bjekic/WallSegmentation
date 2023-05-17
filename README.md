@@ -1,4 +1,4 @@
-# Wall Segmentation
+# Wall Segmentation !\[DOI\](https://zenodo.org/badge/DOI/10.5281/zenodo.7944202.svg)
 
 Implementation of a wall segmentation algorithm in PyTorch.
 
