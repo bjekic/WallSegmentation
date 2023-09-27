@@ -2,7 +2,9 @@
 
 Implementation of a wall segmentation algorithm in PyTorch.
 
-Accompanying paper: [Getting Started with Wall Segmentation](https://www.researchgate.net/publication/363059238_Getting_Started_with_Wall_Segmentation).
+Accompanying papers: 
+- [Getting Started with Wall Segmentation](https://www.researchgate.net/publication/363059238_Getting_Started_with_Wall_Segmentation)
+- [Wall segmentation in 2D images using convolutional neural networks](https://www.researchgate.net/publication/373861585_Wall_segmentation_in_2D_images_using_convolutional_neural_networks)
 
 Implementation is based on the paper: [Pyramid Scene Parsing Network](https://arxiv.org/abs/1612.01105).
 
